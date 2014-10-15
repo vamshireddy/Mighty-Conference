@@ -8,6 +8,7 @@ typedef struct client_node
 	pthread_t tid; // Thread ID of the thread which controls the client communication job
 	int socket_id;   // Socket of the communication
 	int client_id; // Client ID
+	struct sockaddr_in* client_addr;
 	struct client_node* next;
 }client_node_t;
 
@@ -20,6 +21,7 @@ typedef struct clients_list
 	// Head of the list
 	client_node_t* head;
 	// List reader-writer lock
+	int list_count;
 	pthread_rwlock_t l_lock;
 
 }clients_list_t;
@@ -29,6 +31,7 @@ int init_list(clients_list_t* list)
 {
 	int err;
 	list->head = NULL;
+	list->list_count = 0;
 	err = pthread_rwlock_init(&list->l_lock,NULL);
 
 	if( err != 0 )
@@ -44,24 +47,27 @@ int init_list(clients_list_t* list)
 /*
 	This function will be called by the worker thread assigned for a client */
 
-client_node_t* create_new_client(int s_id, int id)
+client_node_t* create_new_client(int s_id, int id, struct sockaddr_in* cliaddr)
 {
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
 	temp->tid = pthread_self();
 	temp->socket_id = s_id;
 	temp->client_id = id;
+	memcpy(temp->client_addr, cliaddr, sizeof(cliaddr));
 	temp->next = NULL;
 	return temp;
 }
 
 /* 
-Add the client to the head of the list 
+	Add the client to the head of the list 
 */
 
 void add_client(clients_list_t* list, client_node_t* client)
 {
 	// Lock the list
 	pthread_rwlock_wrlock(&list->l_lock);
+
+	list->list_count++;
 
 	if( list->head == NULL )
 	{
@@ -102,6 +108,7 @@ void remove_client(clients_list_t* list, int id)
 				prev->next = temp->next;
 				free(temp);
 			}
+			list->list_count--;
 			break;
 		}
 		prev = temp;
