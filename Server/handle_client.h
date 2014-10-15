@@ -10,12 +10,54 @@ typedef struct argument_list
 	clients_list_t* list;
 }args_list_t;
 
+
+int delete_client_thread(clients_list_t* list)
+{
+	// This thread is going to be deleted
+	// First reclaim the memory
+
+	remove_client(list, pthread_self());
+	printf("Client has been removed\n");
+	printf("Current online list is \n");
+	display_clients(list);
+	pthread_exit((void*)0);
+}
+
+int read_line(int clientfd, char* buffer, int size,clients_list_t* list)
+{
+	int char_count = size;
+	int chars_read = 0;
+	while( ( chars_read = read(clientfd, buffer + chars_read , char_count ) ) > 0 )
+	{
+		char_count = char_count - chars_read;
+		if( char_count == 0 )
+		{
+			// All chars are read, break out
+			break;
+		}
+	}
+	if( chars_read == -1 )
+	{
+		perror("Error in reading the line in readLine function : handle_client.h\n");
+		return -1;
+	}
+	else if( chars_read == 0 )
+	{
+		printf("Client's connection is terminated\n");
+		delete_client_thread(list);
+		return 0;
+	}
+}
+
 void* client_init_function(void* a)
 {
 	// New thread
 	args_list_t* args = (args_list_t*)a;
 
+	// -------Arguments ---------//
 	clients_list_t* list = args->list;
+	int clientfd = args->clientfd;
+	// --------------------------//
 
 	char ip[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, (args->cliaddr), ip, INET_ADDRSTRLEN);
@@ -32,9 +74,24 @@ void* client_init_function(void* a)
 
 	add_client(list, client);
 
-	// Now display the online clients
 
+	// Validate the client's username and password
+	// Read the username of 20 characters and password of 20 characters
+	char username[USERNAME_LENGTH];
+	read_line(clientfd, username, USERNAME_LENGTH, list);
+	
+	printf("The username is %s\n",username);
+
+	strncpy(client->client_id,username,USERNAME_LENGTH);
+
+	read_line(clientfd, username, USERNAME_LENGTH, list);
+
+	printf("The password is %s\n",username);
+
+	
+	printf("Current List is : \n");
 	display_clients(list);
+
 }
 
 int handle_client_request(clients_list_t* list, int clientfd, const struct sockaddr_in cliaddr)
