@@ -10,6 +10,10 @@ typedef struct argument_list
 	clients_list_t* list;
 }args_list_t;
 
+int authenticate(char* username,char* password)
+{
+	return 1;
+}
 
 int delete_client_thread(clients_list_t* list)
 {
@@ -49,7 +53,7 @@ int read_line(int clientfd, char* buffer, int size,clients_list_t* list)
 	}
 }
 
-void* client_init_function(void* a)
+void* client_function(void* a)
 {
 	// New thread
 	args_list_t* args = (args_list_t*)a;
@@ -79,18 +83,36 @@ void* client_init_function(void* a)
 	// Read the username of 20 characters and password of 20 characters
 	char username[USERNAME_LENGTH];
 	read_line(clientfd, username, USERNAME_LENGTH, list);
-	
 	printf("The username is %s\n",username);
 
+	// Copy the user name to the client node on the list
 	strncpy(client->client_id,username,USERNAME_LENGTH);
 
-	read_line(clientfd, username, USERNAME_LENGTH, list);
+	// Read the password
+	char password[PASSWORD_LENGTH];
+	read_line(clientfd, password, PASSWORD_LENGTH, list);
+	printf("The password is %s\n",password);
 
-	printf("The password is %s\n",username);
+	while( authenticate(username,password) == 0 )
+	{	
+		// Status can be OKAY or DENY
+		char* status = "DENY";
+		printf("Client %s is trying to log in, the credentials are invalid!\n",client->client_id);
+		write(clientfd,status,LOGIN_STATUS_LENGTH);
 
+		// Read username again
+		read_line(clientfd, username, USERNAME_LENGTH, list);
+		printf("The username is %s\n",username);
+
+		// Read password again
+		read_line(clientfd, password, PASSWORD_LENGTH, list);
+		printf("The password is %s\n",password);
+	}
 	
-	printf("Current List is : \n");
-	display_clients(list);
+	// Logged in succesfully
+	printf("Client %s logged in succesfully\n",client->client_id);
+
+	// Now send all online clients in the list to the client
 
 }
 
@@ -106,7 +128,7 @@ int handle_client_request(clients_list_t* list, int clientfd, const struct socka
 	memcpy(args->cliaddr, &cliaddr, sizeof(cliaddr));
 
 	pthread_t tid;
-	if( pthread_create(&tid, NULL, client_init_function, (void*)args) != 0)
+	if( pthread_create(&tid, NULL, client_function, (void*)args) != 0)
 	{
 		printf("Failed to spawn a thread for the client");
 		return -1;

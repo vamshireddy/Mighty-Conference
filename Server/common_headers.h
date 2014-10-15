@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
+#define LOGIN_STATUS_LENGTH 5
 
 
 // Multithreading
