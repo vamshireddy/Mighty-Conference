@@ -45,13 +45,7 @@ int main()
 		// Accept the clients and spawn a new thread for each of them
 		clilen = sizeof(cliaddr);
 		connfd = Accept(listenfd, (struct sockaddr*)&cliaddr, &clilen);
-
-
-		char ip[INET_ADDRSTRLEN];
-		inet_ntop(AF_INET, cliaddr.sin_addr, ip, INET_ADDRSTRLEN);
-
-		printf("IPP %s\n",ip);
-		handle_client_request(connfd,cliaddr);
+		handle_client_request(list, connfd, cliaddr);
 	}
 
 }

@@ -47,13 +47,13 @@ int init_list(clients_list_t* list)
 /*
 	This function will be called by the worker thread assigned for a client */
 
-client_node_t* create_new_client(int s_id, int id, struct sockaddr_in* cliaddr)
+client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 {
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
 	temp->tid = pthread_self();
 	temp->socket_id = s_id;
-	temp->client_id = id;
-	memcpy(temp->client_addr, cliaddr, sizeof(cliaddr));
+	temp->client_id = -1;
+	temp->client_addr = cliaddr;
 	temp->next = NULL;
 	return temp;
 }
