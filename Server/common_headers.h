@@ -4,9 +4,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#define USERNAME_LENGTH 20
+#define PASSWORD_LENGTH 20
 
 
-// pthreads
+// Multithreading
 
 #include <pthread.h>
 

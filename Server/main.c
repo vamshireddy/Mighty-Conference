@@ -12,7 +12,7 @@ int main()
 	clients_list_t* list = (clients_list_t*)malloc(sizeof(clients_list_t));
 
 	/*
-		1) Initialize the list 
+	    Initialize the list 
 	*/
 	init_list(list);
 
