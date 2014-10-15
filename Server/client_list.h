@@ -7,7 +7,7 @@ typedef struct client_node
 {
 	pthread_t tid; // Thread ID of the thread which controls the client communication job
 	int socket_id;   // Socket of the communication
-	int client_id; // Client ID
+	char client_id[USERNAME_LENGTH]; // Client ID
 	struct sockaddr_in* client_addr;
 	struct client_node* next;
 }client_node_t;
@@ -52,7 +52,6 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
 	temp->tid = pthread_self();
 	temp->socket_id = s_id;
-	temp->client_id = -1;
 	temp->client_addr = cliaddr;
 	temp->next = NULL;
 	return temp;
@@ -85,7 +84,7 @@ void add_client(clients_list_t* list, client_node_t* client)
 
 /* Remove the client from the list */
 
-void remove_client(clients_list_t* list, int id)
+void remove_client(clients_list_t* list, pthread_t id)
 {
 
 	// Lock the list
@@ -95,7 +94,7 @@ void remove_client(clients_list_t* list, int id)
 	while( temp!= NULL )
 	{
 
-		if( temp->client_id == id )
+		if( pthread_equal(temp->tid,id) != 0 )
 		{
 			// Found the node
 			if( prev == NULL )
@@ -126,7 +125,7 @@ void display_clients(clients_list_t* list)
 
 	while( temp!= NULL )
 	{
-		printf("Client id : %d , Client thread id : %u \n",temp->client_id, (unsigned int)temp->tid);
+		printf("Client id : %s , Client thread id : %u \n",temp->client_id, (unsigned int)temp->tid);
 		temp = temp->next;
 	}
 }
