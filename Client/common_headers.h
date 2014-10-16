@@ -8,6 +8,13 @@
 #define PASSWORD_LENGTH 20
 #define LOGIN_STATUS_LENGTH 5
 
+// JSON headers
+
+#include <jansson.h>
+
+// Protocol lengths (JSON STRINGS)
+
+#define JSON_LEN_SIZE 26
 
 // Multithreading
 

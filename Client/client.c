@@ -54,12 +54,59 @@ int main()
 		Write(sock_fd,password,PASSWORD_LENGTH);
 	}
 
+
 	// Client succesfully authenticated by the server
 
-	// Now fetch the online clients
+	char cli_strlen_JSON[JSON_LEN_SIZE];
 
-	char cli_str_JSON[1024];
-	read_JSON_string(sock_fd,&cli_str_JSON);
+	// Now fetch the length of the upcoming list
+	Read(sock_fd,cli_strlen_JSON, JSON_LEN_SIZE);
+
 	
+	printf("%si\n",cli_strlen_JSON);
+
+	// With this length build a new string to receive online clients list
+	int length = get_length(cli_strlen_JSON);
+
+	if( length <= 0 )
+	{
+		// Error
+		printf("Error in fetching the length\n");
+		exit(0);
+	}
+
+	printf("The length is %d\n",length);
+
+	char online_clients[length+1]; // +1 for providing space for null character
+	Read(sock_fd,online_clients, length+1);
+	printf("The online clients are : \n%sEND\n",online_clients);
+
+	while( read(sock_fd,cli_strlen_JSON,JSON_LEN_SIZE) > 0 )
+	{
+		length =  get_length(cli_strlen_JSON);
+		printf("New string with length %d\n",length);
+
+		char clients_str[length+1];
+		Read(sock_fd,online_clients, length+1);
+
+		printf("%sEND\n",cli_strlen_JSON);
+	}
+
+}
+
+
+int get_length(char* cli_strlen_JSON)
+{
+	// Extract the JSON part of the string
+	json_error_t error;
+	json_t* root = json_loads(cli_strlen_JSON, 0, &error);
+
+	// Get the length value
+	json_t* len_value_JSON = json_object_get(root, "length");
+
+	char* len_text = json_string_value(len_value_JSON);
+
+	// Return the length value string
+	return atoi(len_text);
 
 }

@@ -35,18 +35,3 @@ int Read(int servfd, char* buffer, int size)
 		exit(0);
 	}
 }
-
-int read_line(int servfd, char* buffer)
-{
-	int char_count = size;
-	int chars_read = 0;
-	while( ( chars_read = read(servfd, buffer + chars_read , char_count ) ) > 0 )
-	{
-		char_count = char_count - chars_read;
-		if( char_count == 0 )
-		{
-			// All chars are read, break out
-			break;
-		}
-	}
-}
