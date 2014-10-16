@@ -3,6 +3,26 @@
 #include "handle_client.h"
 #include "common_headers.h"
 
+
+pthread_t tid;
+
+void* input_commands_function(void* arg)
+{
+	clients_list_t* list = (clients_list_t*)arg;
+
+	int a;
+	printf("Press 1 to view the online clients\n\n");
+	while(1)
+	{
+		scanf("%d",&a);
+		if( a == 1 )
+		{
+			display_clients(list);
+		}
+	}
+
+}
+
 int main()
 {	
 	printf("Started Application................\n");
@@ -39,6 +59,14 @@ int main()
 	Bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
 
 	Listen(listenfd,LISTENQ);
+
+	// Before accespting clients, create a thread for handling user commands to query clients,etc 
+
+	if( pthread_create(&tid, NULL, input_commands_function, (void*)list) != 0)
+	{
+		printf("Failed to spawn a thread for the client");
+		return -1;
+	}
 
 	for(;;)
 	{

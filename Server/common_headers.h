@@ -7,7 +7,16 @@
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
 #define LOGIN_STATUS_LENGTH 5
+#define MAX_LENGTH 1024
+#define LEN_STR_LENGTH 6 // It has 5 characters for length , 1 for \0
 
+// Protocol lengths (JSON STRINGS)
+
+#define JSON_LEN_SIZE 25
+
+// Jansson
+
+#include <jansson.h>
 
 // Multithreading
 

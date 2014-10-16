@@ -3,6 +3,9 @@
 
 #include "common_headers.h"
 
+/*
+	This is the arguments structure which is helpful in passing the arguments while creating a new thread
+*/
 typedef struct argument_list
 {
 	int clientfd;
@@ -10,24 +13,67 @@ typedef struct argument_list
 	clients_list_t* list;
 }args_list_t;
 
+/*
+	This will authenticate a client with a username and password 
+	TODO : Should contact the database, but for now its always valid
+*/
 int authenticate(char* username,char* password)
 {
 	return 1;
 }
+
+/*
+	This will be called by the thread which is allocated to a client.
+	This thread will self destroy by calling this function, as the client's connection is terminated
+*/
 
 int delete_client_thread(clients_list_t* list)
 {
 	// This thread is going to be deleted
 	// First reclaim the memory
 
+	// First remove its client from the online list
 	remove_client(list, pthread_self());
 	printf("Client has been removed\n");
 	printf("Current online list is \n");
 	display_clients(list);
+	// Now destroy itself.
 	pthread_exit((void*)0);
 }
 
-int read_line(int clientfd, char* buffer, int size,clients_list_t* list)
+void send_length_of_msg(int clientfd, char* str)
+{
+	int len = strlen(str);
+	char len_str[LEN_STR_LENGTH];
+	snprintf(len_str,6,"%5d",len);
+
+	json_t* len_str_object = json_object();
+  	json_object_set_new(len_str_object, "length", json_string(len_str));
+
+
+	char* s = json_dumps(len_str_object, JSON_DECODE_ANY);
+
+	printf("Built length str :%sEND and length is %d\n",s,strlen(s));
+
+	// Send the length to the client
+	Write(clientfd,s,JSON_LEN_SIZE);
+}
+
+/*
+	Send the list of the clients who are logged in currently to client with clientfd
+*/
+int send_clients_list(int clientfd, clients_list_t* list)
+{
+	char* string = build_JSON_string_from_list(list);
+	
+	// Send the length first
+	send_length_of_msg(clientfd,string);
+
+	// Now send the online clients
+	write(clientfd,string,strlen(string));
+}
+
+int read_str(int clientfd, char* buffer, int size, clients_list_t* list)
 {
 	int char_count = size;
 	int chars_read = 0;
@@ -82,7 +128,7 @@ void* client_function(void* a)
 	// Validate the client's username and password
 	// Read the username of 20 characters and password of 20 characters
 	char username[USERNAME_LENGTH];
-	read_line(clientfd, username, USERNAME_LENGTH, list);
+	read_str(clientfd, username, USERNAME_LENGTH, list);
 	printf("The username is %s\n",username);
 
 	// Copy the user name to the client node on the list
@@ -90,7 +136,7 @@ void* client_function(void* a)
 
 	// Read the password
 	char password[PASSWORD_LENGTH];
-	read_line(clientfd, password, PASSWORD_LENGTH, list);
+	read_str(clientfd, password, PASSWORD_LENGTH, list);
 	printf("The password is %s\n",password);
 
 	while( authenticate(username,password) == 0 )
@@ -98,21 +144,25 @@ void* client_function(void* a)
 		// Status can be OKAY or DENY
 		char* status = "DENY";
 		printf("Client %s is trying to log in, the credentials are invalid!\n",client->client_id);
-		write(clientfd,status,LOGIN_STATUS_LENGTH);
+		Write(clientfd,status,LOGIN_STATUS_LENGTH);
 
 		// Read username again
-		read_line(clientfd, username, USERNAME_LENGTH, list);
+		read_str(clientfd, username, USERNAME_LENGTH, list);
 		printf("The username is %s\n",username);
 
 		// Read password again
-		read_line(clientfd, password, PASSWORD_LENGTH, list);
+		read_str(clientfd, password, PASSWORD_LENGTH, list);
 		printf("The password is %s\n",password);
 	}
 	
 	// Logged in succesfully
 	printf("Client %s logged in succesfully\n",client->client_id);
+	char* status = "OKAY";
+	Write(clientfd,status,LOGIN_STATUS_LENGTH);
 
 	// Now send all online clients in the list to the client
+	
+	send_clients_list(clientfd,list);
 
 }
 

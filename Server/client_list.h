@@ -119,6 +119,9 @@ void remove_client(clients_list_t* list, pthread_t id)
 
 void display_clients(clients_list_t* list)
 {
+	// Lock this list in read mode
+	pthread_rwlock_rdlock(&list->l_lock);
+	
 	client_node_t* temp = list->head;
 
 	printf("The clients are : \n");
@@ -128,4 +131,41 @@ void display_clients(clients_list_t* list)
 		printf("Client id : %s , Client thread id : %u \n",temp->client_id, (unsigned int)temp->tid);
 		temp = temp->next;
 	}
+
+	// Unlock the list
+	pthread_rwlock_unlock(&list->l_lock);
+}
+
+char* build_JSON_string_from_list(clients_list_t* list)
+{
+
+	// Create JSON objects and populate them
+	json_t* root,*cli_array;
+
+	cli_array = json_array();
+
+	// Lock this list in read mode
+	pthread_rwlock_rdlock(&list->l_lock);
+
+	client_node_t* temp = list->head;
+
+	while( temp!= NULL )
+	{
+		json_t* tmp = json_object();
+		json_object_set_new(tmp,"Client",json_string(temp->client_id));
+	    json_array_append_new(cli_array,tmp);
+		temp = temp->next;
+	}
+
+	// Unlock the list
+	pthread_rwlock_unlock(&list->l_lock);
+
+	root = json_object();
+	json_object_set_new(root,"clients_list",cli_array);
+
+	char* s = json_dumps(root, JSON_DECODE_ANY);
+
+	printf("Built %s \n",s);
+
+	return s;
 }
