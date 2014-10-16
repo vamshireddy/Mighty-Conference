@@ -70,7 +70,8 @@ int send_clients_list(int clientfd, clients_list_t* list)
 	send_length_of_msg(clientfd,string);
 
 	// Now send the online clients
-	write(clientfd,string,strlen(string));
+	write(clientfd,string,strlen(string)+1);
+	printf("Written %sEND\n",string);
 }
 
 int read_str(int clientfd, char* buffer, int size, clients_list_t* list)
