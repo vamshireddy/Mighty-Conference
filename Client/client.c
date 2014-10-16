@@ -1,5 +1,9 @@
-#include <stdio.h>
-#include <netinet/in.h>
+#include "common_headers.h"
+#include "socket_utilities.h"
+
+char* read_JSON_string(int sockfd,char* str)
+{
+}
 
 int main()
 {
@@ -18,28 +22,44 @@ int main()
 
 	connect(sock_fd,(struct sockaddr*)&server_sock,sizeof(struct sockaddr_in));
 
-	char username[20];
+	// Send the user name and password to the server for authentication
+
+	char username[USERNAME_LENGTH];
 	scanf("%s",username);
+	printf("Now sending username\n");
+	Write(sock_fd,username,USERNAME_LENGTH);
 
-	printf("The string is\n");
-	int i;
-	for(i=0;i<20;i++)
+	char password[PASSWORD_LENGTH];
+	scanf("%s",password);
+	printf("Now sending password\n");
+	Write(sock_fd,password,20);
+
+	// Now get the authentication status
+
+	// RIGHT NOW EVERYTHING IS A NORMAL STRING< >>> WE HAVE TO CONVERT THEM TO JSON LATER
+
+
+	char status[LOGIN_STATUS_LENGTH];
+	Read(sock_fd,status,LOGIN_STATUS_LENGTH);
+
+	while( strcmp(status,"DENY") == 0 )
 	{
-		printf("%c ",username[i]);
+		// Denied access, try again
+		scanf("%s",username);
+		printf("Now sending username\n");
+		Write(sock_fd,username,USERNAME_LENGTH);
+
+		scanf("%s",password);
+		printf("Now sending password\n");
+		Write(sock_fd,password,PASSWORD_LENGTH);
 	}
-	printf("Now sending\n");
 
-	write(sock_fd,username,20);
+	// Client succesfully authenticated by the server
 
-	scanf("%s",username);
+	// Now fetch the online clients
 
-	printf("The string is\n");
-	for(i=0;i<20;i++)
-	{
-		printf("%c ",username[i]);
-	}
-	printf("Now sending\n");
-
-	write(sock_fd,username,20);
+	char cli_str_JSON[1024];
+	read_JSON_string(sock_fd,&cli_str_JSON);
+	
 
 }
