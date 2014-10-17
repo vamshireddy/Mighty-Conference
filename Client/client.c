@@ -1,9 +1,7 @@
 #include "common_headers.h"
 #include "socket_utilities.h"
 
-char* read_JSON_string(int sockfd,char* str)
-{
-}
+
 
 int main()
 {
@@ -55,7 +53,7 @@ int main()
 	}
 
 
-	// Client succesfully authenticated by the server
+	// Client is succesfully authenticated by the server
 
 	char cli_strlen_JSON[JSON_LEN_SIZE];
 
@@ -70,7 +68,7 @@ int main()
 
 	if( length <= 0 )
 	{
-		// Error
+		// Error in extracting length
 		printf("Error in fetching the length\n");
 		exit(0);
 	}
@@ -78,35 +76,49 @@ int main()
 	printf("The length is %d\n",length);
 
 	char online_clients[length+1]; // +1 for providing space for null character
-	Read(sock_fd,online_clients, length+1);
+	Read(sock_fd,online_clients, length+1); // Read the null character too
 	printf("The online clients are : \n%sEND\n",online_clients);
 
+
+	// This loop is for continous reading of messages from the server, if any
+	// Otherwise, it will simply wait at this prompt untill a msg is seen from the server.
 	while( read(sock_fd,cli_strlen_JSON,JSON_LEN_SIZE) > 0 )
 	{
 		length =  get_length(cli_strlen_JSON);
 		printf("New string with length %d\n",length);
 
 		char clients_str[length+1];
-		Read(sock_fd,online_clients, length+1);
+		Read(sock_fd,clients_str, length+1);
 
-		printf("%sEND\n",cli_strlen_JSON);
+		printf("%sEND\n",clients_str);
 	}
 
 }
 
 
+
+/*
+	This function will extract the integer from the string ( length from the JSON value )
+*/
+
 int get_length(char* cli_strlen_JSON)
 {
 	// Extract the JSON part of the string
-	json_error_t error;
-	json_t* root = json_loads(cli_strlen_JSON, 0, &error);
+	json_error_t error; // For error, can be ignored
+	json_t* root = json_loads(cli_strlen_JSON, 0, &error); // Make a JSON object of the received string
+
+	if( root == NULL )
+	{
+		printf("Error is decoding JSON\n");
+		exit(0);
+	}
 
 	// Get the length value
-	json_t* len_value_JSON = json_object_get(root, "length");
+	json_t* len_value_JSON = json_object_get(root, "length"); // Get the value JSON object of key (length)
 
-	char* len_text = json_string_value(len_value_JSON);
+	char* len_text = json_string_value(len_value_JSON); // Convert the value JSON object to string to get the length in string format
 
 	// Return the length value string
-	return atoi(len_text);
+	return atoi(len_text); // return the length string in integer format
 
 }
