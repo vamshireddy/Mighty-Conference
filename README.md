@@ -4,6 +4,27 @@ Mighty-Conference
 Mighty Conferencing Application is aimed to provide a way for professors to connect seamlessly and exchange their ideas in Computer Science Building at Manipal Institute Of Technology
 
 
+
+#### JSON Library (Jansson) ####
+
+1. Install: 
++ https://jansson.readthedocs.org/en/2.7/gettingstarted.html#compiling-and-installing-jansson
+
+2. Enter these commands 
++ ./configure
++ make
++ make check
++ make install
+
+#### Installation ####
+
+* Install the Jannson library as described above.
+
+* Download the repo
++ run make in client folder
++ run make in server folder
+
+
 #### Online Clients list - Synchronization Check Points ####
 1. Clients connect to the server, server then add the new client to the Online clients List and spawns a new thread.
 
