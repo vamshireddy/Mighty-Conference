@@ -60,11 +60,11 @@ void send_length_of_msg(int clientfd, char* str)
 }
 
 /*
-	Send the list of the clients who are logged in currently to client with clientfd
+	Send the list of the clients who are logged in currently to client with clientfd.
 */
-int send_clients_list(int clientfd, clients_list_t* list)
+int send_clients_list(int clientfd, clients_list_t* list,client_node_t* client)
 {
-	char* string = build_JSON_string_from_list(list);
+	char* string = build_JSON_string_from_list(list,client);
 	
 	// Send the length first
 	send_length_of_msg(clientfd,string);
@@ -121,10 +121,6 @@ void* client_function(void* a)
 
 	printf("New client created\n");
 
-	// Add the client to the list
-
-	add_client(list, client);
-
 
 	// Validate the client's username and password
 	// Read the username of 20 characters and password of 20 characters
@@ -134,6 +130,9 @@ void* client_function(void* a)
 
 	// Copy the user name to the client node on the list
 	strncpy(client->client_id,username,USERNAME_LENGTH);
+
+	// Add the client to the list
+	add_client(list, client);
 
 	// Read the password
 	char password[PASSWORD_LENGTH];
@@ -163,7 +162,7 @@ void* client_function(void* a)
 
 	// Now send all online clients in the list to the client
 	
-	send_clients_list(clientfd,list);
+	send_clients_list(clientfd,list,client);
 
 }
 

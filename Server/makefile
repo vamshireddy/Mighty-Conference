@@ -1,3 +1,3 @@
 
 servermake: main.c
-	gcc -o server main.c -pthread -ljansson
+	gcc -g -o server main.c -pthread -ljansson

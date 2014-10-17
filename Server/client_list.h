@@ -27,6 +27,7 @@ typedef struct clients_list
 }clients_list_t;
 
 
+
 int init_list(clients_list_t* list)
 {
 	int err;
@@ -44,6 +45,23 @@ int init_list(clients_list_t* list)
 	return 0;
 }
 
+char* get_length_str(char* str)
+{
+	int len = strlen(str);
+	char len_str[LEN_STR_LENGTH];
+	snprintf(len_str,6,"%5d",len);
+
+	json_t* len_str_object = json_object();
+  	json_object_set_new(len_str_object, "length", json_string(len_str));
+
+
+	char* s = json_dumps(len_str_object, JSON_DECODE_ANY);
+
+	printf("Built length str :%sEND and length is %d\n",s,strlen(s));
+
+	return s;
+}
+
 /*
 	This function will be called by the worker thread assigned for a client */
 
@@ -57,6 +75,37 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 	return temp;
 }
 
+
+int inform_everyone(client_node_t* client,clients_list_t* list )
+{
+	// 1.Create the JSON string 
+	// 2. Find the length and make JSON string of it
+	// 3. Inform the receiver about the length
+	// 4. send the JSON string
+	json_t* root = json_object();
+	json_object_set_new(root,"new_client",json_string(client->client_id));
+	char* str_JSON = json_dumps(root, JSON_DECODE_ANY);
+
+	// Send all the clients in the list
+
+	client_node_t* temp = list->head;
+
+	char* len_str = get_length_str(str_JSON);
+
+	while( temp!= NULL )
+	{
+		// Send the length to the client
+		Write(temp->socket_id,len_str,JSON_LEN_SIZE);
+		// Now send the online clients
+		Write(temp->socket_id,str_JSON,strlen(str_JSON)+1);
+		printf("Written %sEND\n",str_JSON);
+		temp = temp->next;
+	}
+
+	printf("SENT EVERYONE ABOUT THE UPDATE");
+
+}
+
 /* 
 	Add the client to the head of the list 
 */
@@ -65,6 +114,9 @@ void add_client(clients_list_t* list, client_node_t* client)
 {
 	// Lock the list
 	pthread_rwlock_wrlock(&list->l_lock);
+
+	// Inform all other clients about this new client
+	inform_everyone(client,list);
 
 	list->list_count++;
 
@@ -136,7 +188,7 @@ void display_clients(clients_list_t* list)
 	pthread_rwlock_unlock(&list->l_lock);
 }
 
-char* build_JSON_string_from_list(clients_list_t* list)
+char* build_JSON_string_from_list(clients_list_t* list, client_node_t* client)
 {
 
 	// Create JSON objects and populate them
@@ -151,6 +203,12 @@ char* build_JSON_string_from_list(clients_list_t* list)
 
 	while( temp!= NULL )
 	{
+		// Skip sending its name to the it(client).
+		if( strcmp(temp->client_id,client->client_id)==0 )
+		{
+			temp = temp->next;
+			continue;
+		}
 		json_t* tmp = json_object();
 		json_object_set_new(tmp,"Client",json_string(temp->client_id));
 	    json_array_append_new(cli_array,tmp);
@@ -160,12 +218,15 @@ char* build_JSON_string_from_list(clients_list_t* list)
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
 
+	// Create a JSON object and add the client list to it
 	root = json_object();
 	json_object_set_new(root,"clients_list",cli_array);
 
+	// Make a JSON string from the above object
 	char* s = json_dumps(root, JSON_DECODE_ANY);
 
 	printf("Built %s \n",s);
 
 	return s;
 }
+
