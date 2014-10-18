@@ -1,3 +1,4 @@
+// First check wheather the handle client has already been added, if no then define HANDLE_CLIENT_H
 #ifndef HANDLE_CLIENT_H
 #define HANDLE_CLIENT_H
 

@@ -1,5 +1,4 @@
 #include "common_headers.h"
-
 /*
 	Node format for the client's node in the online clients list.
 */
@@ -11,25 +10,32 @@ typedef struct client_node
 	int reachable;
 	struct sockaddr_in* client_addr;
 	struct client_node* next;
+
 }client_node_t;
 
 /*
 	Reader writer lock will lock the list when some writer thread tries to update, while providing 
-	simultaneous reads to the reader threads when there is no writer thread holding the writer lock.
+	simultaneous reads to the reader threads, given there is no writer thread holding the writer lock.
 */
 typedef struct clients_list
 {
 	// Head of the list
 	client_node_t* head;
 	// List reader-writer lock
-	int list_count;
 	pthread_rwlock_t l_lock;
+	// No of clients in the list
+	int list_count;
 
 }clients_list_t;
 
-
+/*
+	Global declaration of list
+*/
 clients_list_t* list = NULL;
 
+/*
+	Initalize the list
+*/
 int init_list()
 {
 	int err;
@@ -103,7 +109,12 @@ void* monitor_list_for_stale_clients()
 	}
 }*/
 
-// JSON UTil gunction
+/*
+	JSON Utility function for creating a length string
+	Length string is nothing but, before transmitting a message, the client has to know how many char's should it 
+	receive, so this length string will provide that to the client. Client then can use this length to receive the 
+	actual string
+*/
 
 char* get_length_str(char* str)
 {
@@ -119,7 +130,8 @@ char* get_length_str(char* str)
 
 
 /*
-	This function will be called by the worker thread assigned for a client */
+	This function will be called by the worker thread assigned for a client
+*/
 
 client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* userid)
 {
@@ -136,6 +148,8 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* us
 /*
 	Type : 0 --- deletion of client
 	Type : 1 --- addition of client
+
+	This informs everyone in the system about the addition of new client or deletion of old client
 */
 
 int inform_everyone(char* client_id,int type)
@@ -160,11 +174,9 @@ int inform_everyone(char* client_id,int type)
 	char* str_JSON = json_dumps(root, JSON_DECODE_ANY);
 
 	// Send all the clients in the list
-
 	client_node_t* temp = list->head;
 
-	printf("entered here\n");
-
+	// Calculate the length and get the string, this will be sent to the client.
 	char* len_str = get_length_str(str_JSON);
 
 	while( temp!= NULL )
@@ -172,14 +184,13 @@ int inform_everyone(char* client_id,int type)
 		printf("WRITING MANN!! %s\n",temp->client_id);
 		// Send the length to the client
 		Write(temp->clientfd,len_str,JSON_LEN_SIZE, temp);
-		// Now send the online clients
+		// Now send the online clients string
 		Write(temp->clientfd,str_JSON,strlen(str_JSON)+1,temp);
 
-		printf("Written %sEND\n",str_JSON);
 		temp = temp->next;
 	}
 
-	printf("SENT EVERYONE ABOUT THE UPDATE");
+	printf("SENT EVERYONE ABOUT THE UPDATE\n");
 
 }
 
@@ -251,7 +262,7 @@ void remove_client(pthread_t tid)
 		prev = temp;
 		temp = temp->next;
 	}
-	printf("DONE WITH REMOVING");
+	printf("DONE WITH REMOVING\n");
 	// INFORM EVERYONE ABOUT THE DELETION
 	inform_everyone(client_name,0);
 
@@ -259,6 +270,9 @@ void remove_client(pthread_t tid)
 	pthread_rwlock_unlock(&list->l_lock);
 }
 
+/*
+ 	Displays the online clients in the system
+ */
 void display_clients()
 {
 	// Lock this list in read mode
@@ -277,6 +291,10 @@ void display_clients()
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
 }
+
+/*
+	List is traversed and JSON string is built 
+*/
 
 char* build_JSON_string_from_list(client_node_t* client)
 {
