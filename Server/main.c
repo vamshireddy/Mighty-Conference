@@ -6,6 +6,14 @@
 
 pthread_t tid;
 
+void sig_hndlr()
+{
+	// This is the handler for the signal SIGPIPE
+	// This is fired when the client terminated abruptly and server thread writes to the client socket descriptor
+	// Here we don't do anything, we will handle near the write call itself.
+	printf("\nSIGPIPE fired \n");
+}
+
 void* input_commands_function(void* arg)
 {
 	clients_list_t* list = (clients_list_t*)arg;
@@ -25,16 +33,17 @@ void* input_commands_function(void* arg)
 
 int main()
 {	
+	signal(SIGPIPE, sig_hndlr);
 	printf("Started Application................\n");
 	/*
 		Start listening for client connections 
 	*/
-	clients_list_t* list = (clients_list_t*)malloc(sizeof(clients_list_t));
+	list = (clients_list_t*)malloc(sizeof(clients_list_t));
 
 	/*
 	    Initialize the list 
 	*/
-	init_list(list);
+	init_list();
 
 	/*
 		Listen to the requests. if any request from the client - spawn a thread, add the client to the list
@@ -73,7 +82,7 @@ int main()
 		// Accept the clients and spawn a new thread for each of them
 		clilen = sizeof(cliaddr);
 		connfd = Accept(listenfd, (struct sockaddr*)&cliaddr, &clilen);
-		handle_client_request(list, connfd, cliaddr);
+		handle_client_request(connfd, cliaddr);
 	}
 
 }

@@ -4,6 +4,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
 #define LOGIN_STATUS_LENGTH 5
@@ -26,7 +29,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#define SERV_PORT 4321
+#define SERV_PORT 4414
 #define LISTENQ 20
 #define INET_ADDRSTRLEN 16
 

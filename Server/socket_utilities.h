@@ -48,11 +48,3 @@ int Accept(int sockfd, struct sockaddr* cliaddr, socklen_t* addrlen)
 	return ret;
 }
 
-int Write(int sockfd, char* buff, int len)
-{
-	if( write(sockfd,buff,len) < len)
-	{
-		perror("Error in writing\n");
-		pthread_exit((void*)0);
-	}
-}

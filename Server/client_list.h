@@ -6,7 +6,7 @@
 typedef struct client_node
 {
 	pthread_t tid; // Thread ID of the thread which controls the client communication job
-	int socket_id;   // Socket of the communication
+	int clientfd;   // Socket of the communication
 	char client_id[USERNAME_LENGTH]; // Client ID
 	struct sockaddr_in* client_addr;
 	struct client_node* next;
@@ -27,8 +27,9 @@ typedef struct clients_list
 }clients_list_t;
 
 
+clients_list_t* list = NULL;
 
-int init_list(clients_list_t* list)
+int init_list()
 {
 	int err;
 	list->head = NULL;
@@ -69,7 +70,7 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 {
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
 	temp->tid = pthread_self();
-	temp->socket_id = s_id;
+	temp->clientfd = s_id;
 	temp->client_addr = cliaddr;
 	temp->next = NULL;
 	return temp;
@@ -80,7 +81,7 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 	Type : 1 --- addition of client
 */
 
-int inform_everyone(char* client_id,clients_list_t* list ,int type)
+int inform_everyone(char* client_id,int type)
 {
 	// 1.Create the JSON string 
 	// 2. Find the length and make JSON string of it
@@ -111,10 +112,14 @@ int inform_everyone(char* client_id,clients_list_t* list ,int type)
 
 	while( temp!= NULL )
 	{
+		printf("WRITING MANN!! %s\n",temp->client_id);
 		// Send the length to the client
-		Write(temp->socket_id,len_str,JSON_LEN_SIZE);
+		if( Write(temp->clientfd,len_str,JSON_LEN_SIZE,list) == -1 )
+		{
+			// the client has terminated, so kill the thread of that client which is still exisiting.
+		}
 		// Now send the online clients
-		Write(temp->socket_id,str_JSON,strlen(str_JSON)+1);
+		Write(temp->clientfd,str_JSON,strlen(str_JSON)+1,list);
 		printf("Written %sEND\n",str_JSON);
 		temp = temp->next;
 	}
@@ -127,13 +132,13 @@ int inform_everyone(char* client_id,clients_list_t* list ,int type)
 	Add the client to the head of the list 
 */
 
-void add_client(clients_list_t* list, client_node_t* client)
+void add_client(client_node_t* client, int* is_client_added)
 {
 	// Lock the list
 	pthread_rwlock_wrlock(&list->l_lock);
 
 	// Inform all other clients about this new client
-	inform_everyone(client->client_id,list,1);
+	inform_everyone(client->client_id,1);
 
 	list->list_count++;
 
@@ -149,25 +154,27 @@ void add_client(clients_list_t* list, client_node_t* client)
 	}
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
+	// Client is added now!. Make it 1
+	*is_client_added = 1;
 }
 
 /* Remove the client from the list */
 
-void remove_client(clients_list_t* list, pthread_t id)
+void remove_client(pthread_t tid)
 {
 
 	// Lock the list
 	pthread_rwlock_wrlock(&list->l_lock);
 
 	// Client name holder
-	char* client_name[USERNAME_LENGTH];
+	char client_name[USERNAME_LENGTH];
 
 	client_node_t* temp = list->head;
 	client_node_t* prev = NULL;
 	while( temp!= NULL )
 	{
 
-		if( pthread_equal(temp->tid,id) != 0 )
+		if( pthread_equal(temp->tid,tid) != 0 )
 		{
 			// Found the node
 			if( prev == NULL )
@@ -190,13 +197,13 @@ void remove_client(clients_list_t* list, pthread_t id)
 	}
 
 	// INFORM EVERYONE ABOUT THE DELETION
-	inform_everyone(client_name,list,0);
+	inform_everyone(client_name,0);
 
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
 }
 
-void display_clients(clients_list_t* list)
+void display_clients()
 {
 	// Lock this list in read mode
 	pthread_rwlock_rdlock(&list->l_lock);
@@ -215,7 +222,7 @@ void display_clients(clients_list_t* list)
 	pthread_rwlock_unlock(&list->l_lock);
 }
 
-char* build_JSON_string_from_list(clients_list_t* list, client_node_t* client)
+char* build_JSON_string_from_list(client_node_t* client)
 {
 
 	// Create JSON objects and populate them
