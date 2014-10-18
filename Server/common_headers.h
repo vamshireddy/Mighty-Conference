@@ -14,7 +14,6 @@
 #define LEN_STR_LENGTH 6 // It has 5 characters for length , 1 for \0
 
 // Protocol lengths (JSON STRINGS)
-
 #define JSON_LEN_SIZE 26
 
 // Jansson
@@ -29,7 +28,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#define SERV_PORT 4414
+#define SERV_PORT 4444
 #define LISTENQ 20
 #define INET_ADDRSTRLEN 16
 

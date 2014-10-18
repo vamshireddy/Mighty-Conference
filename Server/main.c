@@ -28,7 +28,6 @@ void* input_commands_function(void* arg)
 			display_clients(list);
 		}
 	}
-
 }
 
 int main()
@@ -76,6 +75,12 @@ int main()
 		printf("Failed to spawn a thread for the client");
 		return -1;
 	}
+
+	/*if( pthread_create(&tid, NULL, monitor_list_for_stale_clients, NULL) != 0)
+	{
+		printf("Failed to spawn a thread for the client");
+		return -1;
+	}*/
 
 	for(;;)
 	{

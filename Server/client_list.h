@@ -8,6 +8,7 @@ typedef struct client_node
 	pthread_t tid; // Thread ID of the thread which controls the client communication job
 	int clientfd;   // Socket of the communication
 	char client_id[USERNAME_LENGTH]; // Client ID
+	int reachable;
 	struct sockaddr_in* client_addr;
 	struct client_node* next;
 }client_node_t;
@@ -46,33 +47,89 @@ int init_list()
 	return 0;
 }
 
+
+void* monitor_list_for_stale_clients()
+{
+	printf("\n\nMonitoring the list\n");
+	while( 1 )
+	{
+		client_node_t* head = list->head;
+		// Lock the list before monitoring
+		pthread_rwlock_wrlock(&list->l_lock);
+
+		printf("\n\n\nLOCKING.............\n\n\n");
+		while( head != NULL )
+		{
+			if( head->reachable == 0 )
+			{
+				// Kill the thread, as the client of this thread is not reachable
+				printf("Killing the client %s thread\n",head->client_id);
+				remove_client(head->tid);
+				pthread_cancel(head->tid);
+			}
+			head = head->next;
+		}
+		printf("\n\n\nUNLOCKING.............\n\n\n");
+		sleep(60); // Sleep for 1 min and try again
+	}
+}
+
+
+
+/*void* monitor_list_for_stale_clients_old()
+{
+	printf("\n\nMonitoring the list\n");
+	while( 1 )
+	{
+		client_node_t* head = list->head;
+		while( head != NULL )
+		{
+			if( head->reachable == 0 )
+			{
+				// Kill the thread, as the client of this thread is not reachable
+				printf("Killing the client %s thread\n",head->client_id);
+				remove_client(head->tid);
+				pthread_cancel(head->tid);
+			}
+			else
+			{
+				// Ping the client and see, if its replying back
+				char* msg = "PING";
+				char* msg_len_str = get_length_str(msg);
+				Write(head->clientfd, msg, msg_len_str);
+			}
+			head = head->next;
+		}
+	}
+}*/
+
+// JSON UTil gunction
+
 char* get_length_str(char* str)
 {
 	int len = strlen(str);
 	char len_str[LEN_STR_LENGTH];
 	snprintf(len_str,6,"%5d",len);
-
 	json_t* len_str_object = json_object();
-  	json_object_set_new(len_str_object, "length", json_string(len_str));
-
-
+	json_object_set_new(len_str_object, "length", json_string(len_str));
 	char* s = json_dumps(len_str_object, JSON_DECODE_ANY);
-
 	printf("Built length str :%sEND and length is %d\n",s,strlen(s));
-
 	return s;
 }
+
 
 /*
 	This function will be called by the worker thread assigned for a client */
 
-client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
+client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* userid)
 {
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
+	strcpy(temp->client_id, userid);
 	temp->tid = pthread_self();
 	temp->clientfd = s_id;
 	temp->client_addr = cliaddr;
 	temp->next = NULL;
+	temp->reachable = 1;
 	return temp;
 }
 
@@ -114,12 +171,10 @@ int inform_everyone(char* client_id,int type)
 	{
 		printf("WRITING MANN!! %s\n",temp->client_id);
 		// Send the length to the client
-		if( Write(temp->clientfd,len_str,JSON_LEN_SIZE,list) == -1 )
-		{
-			// the client has terminated, so kill the thread of that client which is still exisiting.
-		}
+		Write(temp->clientfd,len_str,JSON_LEN_SIZE, temp);
 		// Now send the online clients
-		Write(temp->clientfd,str_JSON,strlen(str_JSON)+1,list);
+		Write(temp->clientfd,str_JSON,strlen(str_JSON)+1,temp);
+
 		printf("Written %sEND\n",str_JSON);
 		temp = temp->next;
 	}
@@ -177,6 +232,7 @@ void remove_client(pthread_t tid)
 		if( pthread_equal(temp->tid,tid) != 0 )
 		{
 			// Found the node
+			printf("\n\nFOUND THE NODE!!\n\n");
 			if( prev == NULL )
 			{
 				list->head = temp->next;
@@ -195,7 +251,7 @@ void remove_client(pthread_t tid)
 		prev = temp;
 		temp = temp->next;
 	}
-
+	printf("DONE WITH REMOVING");
 	// INFORM EVERYONE ABOUT THE DELETION
 	inform_everyone(client_name,0);
 
