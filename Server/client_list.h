@@ -75,20 +75,37 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr)
 	return temp;
 }
 
+/*
+	Type : 0 --- deletion of client
+	Type : 1 --- addition of client
+*/
 
-int inform_everyone(client_node_t* client,clients_list_t* list )
+int inform_everyone(char* client_id,clients_list_t* list ,int type)
 {
 	// 1.Create the JSON string 
 	// 2. Find the length and make JSON string of it
 	// 3. Inform the receiver about the length
 	// 4. send the JSON string
 	json_t* root = json_object();
-	json_object_set_new(root,"new_client",json_string(client->client_id));
+
+	char type_str[11];
+	if( type == 1 )
+	{
+		strcpy(type_str,"new_client");
+	}
+	else if( type == 0 )
+	{
+		strcpy(type_str,"del_client");
+	}
+	
+	json_object_set_new(root,type_str,json_string(client_id));
 	char* str_JSON = json_dumps(root, JSON_DECODE_ANY);
 
 	// Send all the clients in the list
 
 	client_node_t* temp = list->head;
+
+	printf("entered here\n");
 
 	char* len_str = get_length_str(str_JSON);
 
@@ -116,7 +133,7 @@ void add_client(clients_list_t* list, client_node_t* client)
 	pthread_rwlock_wrlock(&list->l_lock);
 
 	// Inform all other clients about this new client
-	inform_everyone(client,list);
+	inform_everyone(client->client_id,list,1);
 
 	list->list_count++;
 
@@ -141,6 +158,10 @@ void remove_client(clients_list_t* list, pthread_t id)
 
 	// Lock the list
 	pthread_rwlock_wrlock(&list->l_lock);
+
+	// Client name holder
+	char* client_name[USERNAME_LENGTH];
+
 	client_node_t* temp = list->head;
 	client_node_t* prev = NULL;
 	while( temp!= NULL )
@@ -152,19 +173,25 @@ void remove_client(clients_list_t* list, pthread_t id)
 			if( prev == NULL )
 			{
 				list->head = temp->next;
-				free(temp);
 			}
 			else
 			{
 				prev->next = temp->next;
-				free(temp);
 			}
+
+			// Copy the name, so that we can use it
+			strcpy(client_name,temp->client_id);
+			free(temp);
 			list->list_count--;
 			break;
 		}
 		prev = temp;
 		temp = temp->next;
 	}
+
+	// INFORM EVERYONE ABOUT THE DELETION
+	inform_everyone(client_name,list,0);
+
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
 }

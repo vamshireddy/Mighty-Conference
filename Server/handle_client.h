@@ -37,6 +37,7 @@ int delete_client_thread(clients_list_t* list)
 	printf("Client has been removed\n");
 	printf("Current online list is \n");
 	display_clients(list);
+	printf("\nNOW SENDING UPDATE TO EVERYONE ABOUT THE DELTION\n\n");
 	// Now destroy itself.
 	pthread_exit((void*)0);
 }
