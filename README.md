@@ -19,10 +19,9 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 #### Installation ####
 
 * Install the Jannson library as described above.
-
-* Download the repo
-+ run make in client folder
-+ run make in server folder
+* Download the project repository.
+* Run make in client folder
+* Run make in server folder
 
 
 #### Online Clients list - Synchronization Check Points ####
