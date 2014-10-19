@@ -95,6 +95,8 @@ int Write(int clientfd, char* buff, int len, client_node_t* client)
 	int written_chars = 0;
 
 	int temp;
+
+	// This will write untill the no of characters specified have been written
 	while( left_chars > 0 )
 	{
 		if( (temp = write(clientfd, buff+written_chars, left_chars)) <= 0 )

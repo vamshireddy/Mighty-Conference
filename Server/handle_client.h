@@ -5,7 +5,7 @@
 #include "common_headers.h"
 
 /*
-	This is the arguments structure which is helpful in passing the arguments while creating a new thread
+	This is the arguments structure which is helpful in passing the arguments while creating a n	    ew thread
 */
 typedef struct argument_list
 {
@@ -19,6 +19,7 @@ typedef struct argument_list
 */
 int authenticate(char* username,char* password)
 {
+	// Should contact the database now
 	return 1;
 }
 
@@ -27,7 +28,6 @@ int authenticate(char* username,char* password)
 	This thread will self destroy by calling this function.
 	This is triggered because the client's connection is terminated.
 */
-
 int delete_client_thread(int is_client_added_to_list)
 {
 	/* Now deletion of the client has two parts.

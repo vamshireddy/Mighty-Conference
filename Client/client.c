@@ -30,7 +30,7 @@ int main()
 	char password[PASSWORD_LENGTH];
 	scanf("%s",password);
 	printf("Now sending password\n");
-	Write(sock_fd,password,20);
+	Write(sock_fd,password,PASSWORD_LENGTH);
 
 	// Now get the authentication status
 
