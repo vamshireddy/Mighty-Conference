@@ -3,6 +3,38 @@ Mighty-Conference
 
 Mighty Conferencing Application is aimed to provide a way for professors to connect seamlessly and exchange their ideas in Computer Science Building at Manipal Institute Of Technology
 
+#### Interaction between client and server ####
+
+1) Client initiates a socket connection
+2) Client gets the socket descriptor to connect to server
+3) Client will send user name in this format
+
+	{"AUTH":"akshay$password"} // To authenticate the client name and password 
+								// Username and password have to be validated at the client side for checking whether they contain dollar '$'
+4) If the client's details are valid
+	
+	{"AUTH_STATUS":"access"}
+
+	If the client's details are invalid
+
+	{"AUTH_STATUS":"deny"}
+
+	Server send it back to the client.
+
+5) When someone logs in to the system, server sends the following message to all of the current clients
+
+	{"NEW_CLIENT":"akshay"} 
+
+   If someone goes out of the system, server sends the following message to all of the clients
+
+    {"DEL_CLIENT":"vamshi"}
+
+6) Heartbeack acks are received from the clients on the respective server threads
+
+    {"HEARTBEAT":"beep"}
+
+    {"HEARTBEAT":"beepbeep"}
+
 
 
 #### JSON Library (Jansson) ####
