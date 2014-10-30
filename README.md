@@ -5,13 +5,13 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 #### Interaction between client and server ####
 
-1) Client initiates a socket connection
-2) Client gets the socket descriptor to connect to server
-3) Client will send user name in this format
+1. Client initiates a socket connection
+2. Client gets the socket descriptor to connect to server
+3. Client will send user name in this format
 
 	{"AUTH":"akshay$password"} // To authenticate the client name and password 
 								// Username and password have to be validated at the client side for checking whether they contain dollar '$'
-4) If the client's details are valid
+4. If the client's details are valid
 	
 	{"AUTH_STATUS":"access"}
 
@@ -21,7 +21,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 	Server send it back to the client.
 
-5) When someone logs in to the system, server sends the following message to all of the current clients
+5. When someone logs in to the system, server sends the following message to all of the current clients
 
 	{"NEW_CLIENT":"akshay"} 
 
@@ -29,7 +29,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
     {"DEL_CLIENT":"vamshi"}
 
-6) Heartbeack acks are received from the clients on the respective server threads
+6. Heartbeack acks are received from the clients on the respective server threads
 
     {"HEARTBEAT":"beep"}
 
