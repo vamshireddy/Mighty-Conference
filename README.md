@@ -5,6 +5,12 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 #### Interaction between client and server ####
 
+
+* Client and Server Agree on the format for the length string. It is defined in the json_utilities in the authentication_feature branch of the project. Its usually 16 bytes.
+
+* Client can use this function and supply the string to be sent, it will calculate the length and make a json string and gives it to you, now the given json string is sent first( as it contains length ) and then your string
+
+
 1. Client initiates a socket connection
 2. Client gets the socket descriptor to connect to server
 3. Client will send user name in this format
@@ -21,7 +27,11 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 	Server send it back to the client.
 
-5. When someone logs in to the system, server sends the following message to all of the current clients
+5. Client will fetch the other online clients after it logs in, in the following format
+
+	{"CLIENTS_LIST" : [ {"CLIENT":"vamshi","CLIENT":"akshay","CLIENT":"nauti"} ] }
+
+6. When someone logs in to the system, server sends the following message to all of the current clients
 
 	{"NEW_CLIENT":"akshay"} 
 
@@ -29,7 +39,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
     {"DEL_CLIENT":"vamshi"}
 
-6. Heartbeack acks are received from the clients on the respective server threads
+7. Heartbeack acks are received from the clients on the respective server threads
 
     {"HEARTBEAT":"beep"}
 
