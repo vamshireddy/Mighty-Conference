@@ -45,6 +45,40 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
     {"HEARTBEAT":"beepbeep"}
 
+#### How to send messages ####
+
+* To send any message, length message should be constructed and sent to the other host. This message will have the number of chars that you are sending in the actual message.
+
+
+* To send a string auth_str, we need to construct a length string called len_str. This function will do it.
+char* len_str = JSON_make_length_str(auth_str);
+
+* Then send the length string to the other node.
+Write(clientfd, len_str, JSON_LEN_SIZE , *client);
+
+* Now, send the actual string to the other node
+Write(clientfd, auth_str, strlen(auth_str), *client);
+
+#### How to receive messages ####
+
+* Read the length string first   
+Read(sock_fd,len_buff,JSON_LEN_SIZE);   
+
+{"LENGTH":   34}   
+ 
+* Now the length string is received, its time to get the length from the length string  
+	int len = JSON_get_value_from_pair(len_buff, "LENGTH")      
+	---> 34
+
+* Now use this and allocate the buffer   
+
+char* buff = (char*)malloc(sizeof(len+1))   
+
+* Now receive the actual string
+
+char actual_str[len];   
+
+Read(sock_fd,actual_str,len);
 
 
 #### JSON Library (Jansson) ####
@@ -61,7 +95,6 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 #### Installation ####
 
 * Install the Jannson library as described above.
-
 * Download the repo
 + run make in client folder
 + run make in server folder
