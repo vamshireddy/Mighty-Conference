@@ -29,7 +29,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 5. Client will fetch the other online clients after it logs in, in the following format
 
-	{"CLIENTS_LIST" : [ {"CLIENT":"vamshi","CLIENT":"akshay","CLIENT":"nauti"} ] }
+	{"CLIENTS_LIST" : ["vamshi","akshay","nauti"] }
 
 6. When someone logs in to the system, server sends the following message to all of the current clients
 
