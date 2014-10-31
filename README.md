@@ -29,7 +29,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 5. Client will fetch the other online clients after it logs in, in the following format
 
-	{"CLIENTS_LIST" : [ {"CLIENT":"vamshi","CLIENT":"akshay","CLIENT":"nauti"} ] }
+	{"CLIENTS_LIST" : ["vamshi","akshay","nauti"] }
 
 6. When someone logs in to the system, server sends the following message to all of the current clients
 
@@ -67,7 +67,7 @@ Read(sock_fd,len_buff,JSON_LEN_SIZE);
 {"LENGTH":   34}   
  
 * Now the length string is received, its time to get the length from the length string  
-	int len = JSON_get_value_from_pair(len_buff, "LENGTH")      
+	int len = atoi(JSON_get_value_from_pair(len_buff, "LENGTH"));      
 	---> 34
 
 * Now use this and allocate the buffer   
@@ -76,9 +76,7 @@ char* buff = (char*)malloc(sizeof(len+1))
 
 * Now receive the actual string
 
-char actual_str[len];   
-
-Read(sock_fd,actual_str,len);
+Read(sock_fd,buff,len);
 
 
 #### JSON Library (Jansson) ####
