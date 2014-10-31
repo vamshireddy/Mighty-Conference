@@ -1,8 +1,21 @@
+#ifndef client_list_h
+#define client_list_h
 #include "client_list.h"
-#include "socket_utilities.h"
-#include "handle_client.h"
-#include "common_headers.h"
+#endif
 
+#include "socket_utilities.h"
+
+
+#ifndef handle_client_h
+#define handle_client_h
+#include "handle_client.h"
+#endif
+
+
+#ifndef COMMON_HEADERS_H
+#define COMMON_HEADERS_H
+#include "common_headers.h"
+#endif
 
 pthread_t tid;
 
@@ -18,19 +31,18 @@ void sig_hndlr()
 	printf("\nSIGPIPE fired \n");
 }
 
+
+// THIS FUNCTION HAS BUFFER OVERFLOW BUG, HAVE TO RECTIFY IT
 void* input_commands_function(void* arg)
 {
 	clients_list_t* list = (clients_list_t*)arg;
 
-	int a;
-	printf("Press 1 to view the online clients\n\n");
+	char a[1];
+	printf("Press anykey to view the online clients\n\n");
 	while(1)
 	{
-		scanf("%d",&a);
-		if( a == 1 )
-		{
-			display_clients(list);
-		}
+		scanf("%s",a);
+		display_clients(list);
 	}
 }
 

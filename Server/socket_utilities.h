@@ -1,4 +1,7 @@
+#ifndef COMMON_HEADERS_H
+#define COMMON_HEADERS_H
 #include "common_headers.h"
+#endif
 
 int Socket(int domain, int type, int protocol)
 {

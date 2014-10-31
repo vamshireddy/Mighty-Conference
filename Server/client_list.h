@@ -1,4 +1,18 @@
+#ifndef COMMON_HEADERS_H
+#define COMMON_HEADERS_H
 #include "common_headers.h"
+#endif
+
+#ifndef command_func_h
+#define command_func_h
+#include "command_functions.h"
+#endif
+
+#ifndef json_header
+#define json_header
+#include "json_utilities.h"
+#endif
+
 /*
 	Node format for the client's node in the online clients list.
 */
@@ -54,81 +68,6 @@ int init_list()
 }
 
 
-void* monitor_list_for_stale_clients()
-{
-	printf("\n\nMonitoring the list\n");
-	while( 1 )
-	{
-		client_node_t* head = list->head;
-		// Lock the list before monitoring
-		pthread_rwlock_wrlock(&list->l_lock);
-
-		printf("\n\n\nLOCKING.............\n\n\n");
-		while( head != NULL )
-		{
-			if( head->reachable == 0 )
-			{
-				// Kill the thread, as the client of this thread is not reachable
-				printf("Killing the client %s thread\n",head->client_id);
-				remove_client(head->tid);
-				pthread_cancel(head->tid);
-			}
-			head = head->next;
-		}
-		printf("\n\n\nUNLOCKING.............\n\n\n");
-		sleep(60); // Sleep for 1 min and try again
-	}
-}
-
-
-
-/*void* monitor_list_for_stale_clients_old()
-{
-	printf("\n\nMonitoring the list\n");
-	while( 1 )
-	{
-		client_node_t* head = list->head;
-		while( head != NULL )
-		{
-			if( head->reachable == 0 )
-			{
-				// Kill the thread, as the client of this thread is not reachable
-				printf("Killing the client %s thread\n",head->client_id);
-				remove_client(head->tid);
-				pthread_cancel(head->tid);
-			}
-			else
-			{
-				// Ping the client and see, if its replying back
-				char* msg = "PING";
-				char* msg_len_str = get_length_str(msg);
-				Write(head->clientfd, msg, msg_len_str);
-			}
-			head = head->next;
-		}
-	}
-}*/
-
-/*
-	JSON Utility function for creating a length string
-	Length string is nothing but, before transmitting a message, the client has to know how many char's should it 
-	receive, so this length string will provide that to the client. Client then can use this length to receive the 
-	actual string
-*/
-
-char* get_length_str(char* str)
-{
-	int len = strlen(str);
-	char len_str[LEN_STR_LENGTH];
-	snprintf(len_str,6,"%5d",len);
-	json_t* len_str_object = json_object();
-	json_object_set_new(len_str_object, "length", json_string(len_str));
-	char* s = json_dumps(len_str_object, JSON_DECODE_ANY);
-	printf("Built length str :%sEND and length is %d\n",s,strlen(s));
-	return s;
-}
-
-
 /*
 	This function will be called by the worker thread assigned for a client
 */
@@ -154,7 +93,7 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* us
 
 int inform_everyone(char* client_id,int type)
 {
-	// 1.Create the JSON string 
+	// 1. Create the JSON string 
 	// 2. Find the length and make JSON string of it
 	// 3. Inform the receiver about the length
 	// 4. send the JSON string
@@ -163,11 +102,11 @@ int inform_everyone(char* client_id,int type)
 	char type_str[11];
 	if( type == 1 )
 	{
-		strcpy(type_str,"new_client");
+		strcpy(type_str,"NEW_CLIENT");
 	}
 	else if( type == 0 )
 	{
-		strcpy(type_str,"del_client");
+		strcpy(type_str,"DEL_CLIENT");
 	}
 	
 	json_object_set_new(root,type_str,json_string(client_id));
@@ -177,27 +116,28 @@ int inform_everyone(char* client_id,int type)
 	client_node_t* temp = list->head;
 
 	// Calculate the length and get the string, this will be sent to the client.
-	char* len_str = get_length_str(str_JSON);
+	char* len_str = JSON_make_length_str(str_JSON);
+	printf("Length is %d and length string made is %s\n\n\n",strlen(str_JSON),len_str);
 
 	while( temp!= NULL )
 	{
-		printf("WRITING MANN!! %s\n",temp->client_id);
 		// Send the length to the client
-		Write(temp->clientfd,len_str,JSON_LEN_SIZE, temp);
+		printf("\n\n\nI am sending %s-- to %s\n\n",len_str,temp->client_id);
+		Write(temp->clientfd,len_str,strlen(len_str), temp);
+		printf("Sent succesfully\n\n");
 		// Now send the online clients string
-		Write(temp->clientfd,str_JSON,strlen(str_JSON)+1,temp);
-
+		printf("\n\n\ni am sending %s-- to %s\n\n",str_JSON,temp->client_id);
+		Write(temp->clientfd,str_JSON,strlen(str_JSON),temp);
+		printf("Sent succesfully\n\n");
 		temp = temp->next;
 	}
-
-	printf("SENT EVERYONE ABOUT THE UPDATE\n");
+	printf("----------SENT EVERYONE ABOUT THE UPDATE-------------\n");
 
 }
 
 /* 
 	Add the client to the head of the list 
 */
-
 void add_client(client_node_t* client, int* is_client_added)
 {
 	// Lock the list
@@ -317,9 +257,7 @@ char* build_JSON_string_from_list(client_node_t* client)
 			temp = temp->next;
 			continue;
 		}
-		json_t* tmp = json_object();
-		json_object_set_new(tmp,"Client",json_string(temp->client_id));
-	    json_array_append_new(cli_array,tmp);
+	    	json_array_append_new(cli_array,json_string(temp->client_id));
 		temp = temp->next;
 	}
 
@@ -328,7 +266,7 @@ char* build_JSON_string_from_list(client_node_t* client)
 
 	// Create a JSON object and add the client list to it
 	root = json_object();
-	json_object_set_new(root,"clients_list",cli_array);
+	json_object_set_new(root,"CLIENTS_LIST",cli_array);
 
 	// Make a JSON string from the above object
 	char* s = json_dumps(root, JSON_DECODE_ANY);

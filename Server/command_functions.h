@@ -1,5 +1,7 @@
+#ifndef COMMON_HEADERS_H
+#define COMMON_HEADERS_H
 #include "common_headers.h"
-
+#endif
 
 /*
 
@@ -35,9 +37,7 @@ parse_value(char* value,char* uname,char* pass)
 		j++;
 	}
 	password[j] = '\0';
-	printf("UUUUUUUUUUUUUUU %s\n",username);
-	printf("PASSSSSSSSSSSSSSSSS %s\n",password);
-	printf("Username is %s and pass is %s",username,password);
+	printf("Username is %s and pass is %s\n",username,password);
 	strcpy(uname,username);
 	strcpy(pass,password);
 }

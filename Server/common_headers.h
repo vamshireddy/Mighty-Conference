@@ -1,11 +1,10 @@
-#ifndef COMMON_HEADERS_H
-#define COMMON_HEADERS_H
 // ------------------START----------------------- //
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
@@ -14,7 +13,7 @@
 #define LEN_STR_LENGTH 6 // It has 5 characters for length , 1 for \0
 
 // Protocol lengths (JSON STRINGS)
-#define JSON_LEN_SIZE 26
+#define JSON_LEN_SIZE 25
 
 // Jansson
 
@@ -28,10 +27,8 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#define SERV_PORT 4444
+#define SERV_PORT 1234
 #define LISTENQ 20
 #define INET_ADDRSTRLEN 16
 
 // ------------------END-------------------------//
-
-#endif /* COMMON_HEADERS_H */

@@ -1,4 +1,8 @@
+#ifndef COMMON_HEADERS_H
+#define COMMON_HEADERS_H
 #include "common_headers.h"
+#endif
+
 /*
 	JSON Utility function for creating a length string
 	Length string is nothing but, before transmitting a message, the client has to know how many char's should it 
@@ -13,7 +17,7 @@ char* JSON_make_length_str(char* str)
 	json_t* len_str_object = json_object();
 	json_object_set_new(len_str_object, "LENGTH", json_string(len_str));
 	char* s = json_dumps(len_str_object, JSON_DECODE_ANY);
-	printf("Built length str :%sEND and length is %d\n",s,strlen(s));
+	printf("Built length str :%sEND and length is %d\n",s,(int)strlen(s));
 	return s;
 }
 
