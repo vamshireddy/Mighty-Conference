@@ -76,9 +76,7 @@ char* buff = (char*)malloc(sizeof(len+1))
 
 * Now receive the actual string
 
-char actual_str[len];   
-
-Read(sock_fd,actual_str,len);
+Read(sock_fd,buff,len);
 
 
 #### JSON Library (Jansson) ####
