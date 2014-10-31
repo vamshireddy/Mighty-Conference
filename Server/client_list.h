@@ -18,11 +18,11 @@
 */
 typedef struct client_node
 {
-	pthread_t tid; // Thread ID of the thread which controls the client communication job
-	int clientfd;   // Socket of the communication
+	pthread_t tid;  // Thread ID of the thread which controls the client communication job
+	int clientfd;   // Socket of the client
 	char client_id[USERNAME_LENGTH]; // Client ID
-	int reachable;
-	struct sockaddr_in* client_addr;
+	int reachable;	// Reachable status
+	struct sockaddr_in* client_addr;  // Client IP and Port number
 	struct client_node* next;
 
 }client_node_t;
@@ -71,7 +71,6 @@ int init_list()
 /*
 	This function will be called by the worker thread assigned for a client
 */
-
 client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* userid)
 {
 	client_node_t* temp = (client_node_t*)malloc(sizeof(client_node_t));
@@ -84,13 +83,13 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* us
 	return temp;
 }
 
+
 /*
 	Type : 0 --- deletion of client
 	Type : 1 --- addition of client
 
 	This informs everyone in the system about the addition of new client or deletion of old client
 */
-
 int inform_everyone(char* client_id,int type)
 {
 	// 1. Create the JSON string 
@@ -117,18 +116,18 @@ int inform_everyone(char* client_id,int type)
 
 	// Calculate the length and get the string, this will be sent to the client.
 	char* len_str = JSON_make_length_str(str_JSON);
-	printf("Length is %d and length string made is %s\n\n\n",strlen(str_JSON),len_str);
+	//printf("Length is %d and length string made is %s\n\n\n",strlen(str_JSON),len_str);
 
 	while( temp!= NULL )
 	{
 		// Send the length to the client
-		printf("\n\n\nI am sending %s-- to %s\n\n",len_str,temp->client_id);
+		//printf("\n\n\nI am sending %s-- to %s\n\n",len_str,temp->client_id);
 		Write(temp->clientfd,len_str,strlen(len_str), temp);
-		printf("Sent succesfully\n\n");
+		//printf("Sent succesfully\n\n");
 		// Now send the online clients string
-		printf("\n\n\ni am sending %s-- to %s\n\n",str_JSON,temp->client_id);
+		//printf("\n\n\ni am sending %s-- to %s\n\n",str_JSON,temp->client_id);
 		Write(temp->clientfd,str_JSON,strlen(str_JSON),temp);
-		printf("Sent succesfully\n\n");
+		//printf("Sent succesfully\n\n");
 		temp = temp->next;
 	}
 	printf("----------SENT EVERYONE ABOUT THE UPDATE-------------\n");
@@ -183,7 +182,7 @@ void remove_client(pthread_t tid)
 		if( pthread_equal(temp->tid,tid) != 0 )
 		{
 			// Found the node
-			printf("\n\nFOUND THE NODE!!\n\n");
+			//printf("\n\nFOUND THE NODE!!\n\n");
 			if( prev == NULL )
 			{
 				list->head = temp->next;
@@ -202,7 +201,7 @@ void remove_client(pthread_t tid)
 		prev = temp;
 		temp = temp->next;
 	}
-	printf("DONE WITH REMOVING\n");
+	// printf("DONE WITH REMOVING\n");
 	// INFORM EVERYONE ABOUT THE DELETION
 	inform_everyone(client_name,0);
 
@@ -271,7 +270,7 @@ char* build_JSON_string_from_list(client_node_t* client)
 	// Make a JSON string from the above object
 	char* s = json_dumps(root, JSON_DECODE_ANY);
 
-	printf("Built %s \n",s);
+	//printf("Built %s \n",s);
 
 	return s;
 }

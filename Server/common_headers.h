@@ -27,7 +27,6 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#define SERV_PORT 1234
 #define LISTENQ 20
 #define INET_ADDRSTRLEN 16
 

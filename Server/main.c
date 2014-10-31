@@ -46,8 +46,13 @@ void* input_commands_function(void* arg)
 	}
 }
 
-int main()
-{	
+int main(int argc,char* argv[])
+{
+	if( argc <= 1 )
+	{
+		printf("Enter port number as an argument\n");
+		exit(0);
+	}
 	// Add the signal handler
 	signal(SIGPIPE, sig_hndlr);
 	/*
@@ -76,7 +81,7 @@ int main()
 	// Assign the IP and port numbers
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(SERV_PORT);
+	servaddr.sin_port = htons(atoi(argv[1]));
 
 	// Bind the address
 	Bind(listenfd, (struct sockaddr*)&servaddr, sizeof(servaddr));

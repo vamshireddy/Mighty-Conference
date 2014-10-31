@@ -94,7 +94,6 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			*client = create_new_client(clientfd, sockaddr, username);
 			printf("New client created\n");
 
-
 			// Add the node to the list
 			add_client(*client, is_client_added_to_list);
 			printf("Client node created succesfully\n");
@@ -142,7 +141,7 @@ void* client_function(void* a)
 	// -------Arguments passed to thread---------//
 	client_node_t* client  = NULL;
 	int clientfd = args->clientfd;	  // Client socket descriptor
-	int is_client_added_to_list = 0;  
+	int is_client_added_to_list = 0;  // Authenticated status
 	// if the client is authenticated, then it will be added to the list, then this flag will be set
 	// --------------------------//
 
@@ -155,9 +154,7 @@ void* client_function(void* a)
 	{
 		// Receive Length of the command from the client
 		// is_client_added_to_list indicates wheather the client is there in the linked list 
-		printf("IAMMMMM AT START AGAINB");
 		Read(clientfd, length_recv_buffer, JSON_LEN_SIZE, is_client_added_to_list);
-		printf("THIS IS RECV : %s\n",length_recv_buffer);
 		
 
 		// Get the length of the string that the client is about to send
@@ -168,10 +165,11 @@ void* client_function(void* a)
 		
 		// Now read for that length into the allocated buffer
 		Read(clientfd, command_buffer, len, is_client_added_to_list);
-		printf("THIS IS RECV : %s\n",command_buffer);
 		
 		// ----- Now the command is fetched ----- //
 		serve_command(clientfd, command_buffer, &client, &is_client_added_to_list, args->cliaddr);
+
+		printf("Client AUTH STATUS : %d\n",is_client_added_to_list);
 	}
 }
 
