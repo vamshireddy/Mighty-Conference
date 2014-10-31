@@ -1,6 +1,5 @@
 #include "common_headers.h"
 #include "socket_utilities.h"
-#include "json_utilities.h"
 
 
 
@@ -21,33 +20,7 @@ int main()
 
 	connect(sock_fd,(struct sockaddr*)&server_sock,sizeof(struct sockaddr_in));
 
-	char* str = "{\"AUTH\":\"vamshsdddf$not\"}";
-	int i;
-	printf("Sending : %s\n\n",str);
-	
-	char* len_str = JSON_make_length_str(str);
-
-	Write(sock_fd,len_str,JSON_LEN_SIZE);
-
-	Write(sock_fd,str,strlen(str));
-
-
-	while(1)
-	{
-		char len_str1[JSON_LEN_SIZE+1];
-		Read(sock_fd,len_str1,JSON_LEN_SIZE);
-		len_str1[JSON_LEN_SIZE] = 0; // Making it a string
-
-		int len = atoi(JSON_get_value_from_pair(len_str1, "LENGTH"));
-
-		char strrecv[len+1];
-		Read(sock_fd,strrecv,len);
-		strrecv[len] = 0;	// This is for making the char array as a string
-		printf("RECIEVED STRING :  %s\n\n",strrecv);
-	}
-
-
-/*	// Send the user name and password to the server for authentication
+	// Send the user name and password to the server for authentication
 
 	char username[USERNAME_LENGTH];
 	scanf("%s",username);
@@ -118,5 +91,34 @@ int main()
 		Read(sock_fd,clients_str, length+1);
 
 		printf("%sEND\n",clients_str);
-	}*/
+	}
+
+}
+
+
+
+/*
+	This function will extract the integer from the string ( length from the JSON value )
+*/
+
+int get_length(char* cli_strlen_JSON)
+{
+	// Extract the JSON part of the string
+	json_error_t error; // For error, can be ignored
+	json_t* root = json_loads(cli_strlen_JSON, 0, &error); // Make a JSON object of the received string
+
+	if( root == NULL )
+	{
+		printf("Error is decoding JSON\n");
+		exit(0);
+	}
+
+	// Get the length value
+	json_t* len_value_JSON = json_object_get(root, "length"); // Get the value JSON object of key (length)
+
+	char* len_text = json_string_value(len_value_JSON); // Convert the value JSON object to string to get the length in string format
+
+	// Return the length value string
+	return atoi(len_text); // return the length string in integer format
+
 }

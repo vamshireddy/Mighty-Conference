@@ -1,2 +1,2 @@
 clientmake:
-	gcc -o client client.c -pthread -ljansson
+	gcc -g -o client client.c -pthread -ljansson

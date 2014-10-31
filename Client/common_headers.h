@@ -3,6 +3,7 @@
 // ------------------START----------------------- //
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #define USERNAME_LENGTH 20
 #define PASSWORD_LENGTH 20
@@ -16,7 +17,7 @@
 
 // Protocol lengths (JSON STRINGS)
 
-#define JSON_LEN_SIZE 26
+#define JSON_LEN_SIZE 25
 
 // Multithreading
 
