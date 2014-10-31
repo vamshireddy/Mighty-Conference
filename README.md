@@ -67,7 +67,7 @@ Read(sock_fd,len_buff,JSON_LEN_SIZE);
 {"LENGTH":   34}   
  
 * Now the length string is received, its time to get the length from the length string  
-	int len = JSON_get_value_from_pair(len_buff, "LENGTH")      
+	int len = atoi(JSON_get_value_from_pair(len_buff, "LENGTH"));      
 	---> 34
 
 * Now use this and allocate the buffer   
