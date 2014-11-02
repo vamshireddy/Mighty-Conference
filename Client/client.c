@@ -21,7 +21,12 @@ int main()
 
 	connect(sock_fd,(struct sockaddr*)&server_sock,sizeof(struct sockaddr_in));
 
-	char* str = "{\"AUTH\":\"vamshsdddf$not\"}";
+	printf("Enter your name : ");
+	char name[USERNAME_LENGTH];
+	scanf("%s",name);
+	char str[40];
+	sprintf(str,"{\"AUTH\":\"%s$not\"}",name);
+	//char* str = "{\"AUTH\":\"$not\"}";
 	int i;
 	printf("Sending : %s\n\n",str);
 	
