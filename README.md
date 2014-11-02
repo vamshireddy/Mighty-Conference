@@ -45,6 +45,7 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
     {"HEARTBEAT":"beepbeep"}
 
+
 #### How to send messages ####
 
 * To send any message, length message should be constructed and sent to the other host. This message will have the number of chars that you are sending in the actual message.
@@ -77,7 +78,6 @@ char* buff = (char*)malloc(sizeof(len+1))
 * Now receive the actual string
 
 Read(sock_fd,buff,len);
-
 
 #### JSON Library (Jansson) ####
 
