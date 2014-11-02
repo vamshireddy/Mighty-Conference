@@ -86,7 +86,6 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 	{
 		// AUTHENTICATION PART
 		char* auth_str;
-
 		char username[USERNAME_LENGTH];
 		char password[PASSWORD_LENGTH];
 		parse_value(value,username,password);
@@ -124,11 +123,7 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 
 		// Now send online clients list to the current client
 		send_clients_list(*client);
-
 		// Done!!
-		// Freeup the strings
-		free(len_str);
-		free(auth_str);
 	}
 	else
 	{
@@ -138,7 +133,6 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			printf("%s\n", "Its a Heartbeat message");
 			//Invoke Heartbeat message handling function with the value
 			char* heart_beat_reply = handle_heartbeat(value);
-			
 			// Now update the client Node
 			// Update the last contacted time in the client node
 			time_t cur_time;
@@ -151,8 +145,6 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			// Send the hearbeat reply string
 			Write(clientfd, heart_beat_reply, strlen(heart_beat_reply), *client);
 			// Free up the strings
-			free(len_str);
-			free(heart_beat_reply);
 			printf("HEARTBEAT BEEP BEEP\n");
 		}
 		else
