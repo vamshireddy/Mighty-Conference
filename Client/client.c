@@ -2,10 +2,38 @@
 #include "socket_utilities.h"
 #include "json_utilities.h"
 
+pthread_mutex_t lock;
+
+void* heart_beat_message(void* arg)
+{
+	int sock_fd = (int)arg;
+
+	while(1)
+	{
+		printf("Sent BEEP\n");
+		char* str = JSON_make_str("HEARTBEAT","BEEP");
+		char* len_str = JSON_make_length_str(str);
+		//lock
+		pthread_mutex_lock(&lock);
+
+		Write(sock_fd,len_str,JSON_LEN_SIZE);
+		Write(sock_fd,str,strlen(str));
+
+		//unlock
+		pthread_mutex_unlock(&lock);
+		sleep(4);
+	}
+
+}
 
 
 int main()
 {
+	if(pthread_mutex_init(&lock,NULL)!=0)
+	{
+		return 0;
+	}
+
 	int sock_fd = socket(AF_INET,SOCK_STREAM,0);
 	
 	// Create the server socket
@@ -33,9 +61,15 @@ int main()
 	char* len_str = JSON_make_length_str(str);
 
 	Write(sock_fd,len_str,JSON_LEN_SIZE);
-
 	Write(sock_fd,str,strlen(str));
 
+	// This should be after authentication
+	pthread_t tid;
+	if( pthread_create(&tid, NULL, heart_beat_message, (void*)sock_fd) != 0)
+	{
+		printf("Failed to spawn a thread for the list monitor");
+		return -1;
+	}
 
 	while(1)
 	{
@@ -50,7 +84,6 @@ int main()
 		strrecv[len] = 0;	// This is for making the char array as a string
 		printf("RECIEVED STRING :  %s\n\n",strrecv);
 	}
-
 
 /*	// Send the user name and password to the server for authentication
 

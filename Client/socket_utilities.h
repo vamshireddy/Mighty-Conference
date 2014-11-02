@@ -1,5 +1,6 @@
 #include "common_headers.h"
 
+pthread_mutex_t lock;
 
 int Write(int sockfd, char* buff, int len)
 {
