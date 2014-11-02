@@ -21,10 +21,10 @@ typedef struct client_node
 	pthread_t tid;  // Thread ID of the thread which controls the client communication job
 	int clientfd;   // Socket of the client
 	char client_id[USERNAME_LENGTH]; // Client ID
-	int reachable;	// Reachable status
+	int attempt_count;	// If this becomes >=3 then the node is deleted
+	time_t last_contacted_time;
 	struct sockaddr_in* client_addr;  // Client IP and Port number
 	struct client_node* next;
-
 }client_node_t;
 
 /*
@@ -43,9 +43,98 @@ typedef struct clients_list
 }clients_list_t;
 
 /*
-	Global declaration of list
+	Global declaration of list.
+	Can be accessed by any thread.
+	It will be initialized by main thread.
 */
 clients_list_t* list = NULL;
+
+
+/*
+	Monitor the list and remove stale clients
+*/
+void* monitor_list()
+{
+
+	/*
+		This is a seperate thread which is spawned by the main function for the purpose
+		of removing dead clients.
+		This has same lifetime as the main thread.
+		This will kill other dead client threads.
+	*/
+	printf("Started monitoring!!!!!\n");
+	pthread_t dead_clients[MAX_DEAD_CLIENTS];
+
+	int count = 1;
+
+	while( 1 )
+	{
+		printf("Dead client collection ride %d\n",count);
+		int dead_client_count = 0;
+		// Lock the list
+		pthread_rwlock_rdlock(&list->l_lock);
+		client_node_t* temp = list->head;
+		time_t cur_time;
+		time(&cur_time);
+		printf("Acquired lock\n");
+		while(temp!=NULL)
+		{
+			printf("Now looping!");
+			/*
+				Loop through the current list and check the difference between last received time
+				and current time.
+			*/
+			printf ("OLD %s", ctime (&temp->last_contacted_time));
+			printf ("NEW %s", ctime (&cur_time));
+			double diff_time = difftime(cur_time,temp->last_contacted_time);
+			printf("DIFF TIME is %f\n",diff_time);
+			if( diff_time > 5 ) // diff > 5 seconds
+			{
+				// Atempts increased by 1
+				temp->attempt_count++;
+				printf("Attempt for %s is %d\n",temp->client_id,temp->attempt_count);
+			}
+			else
+			{
+				temp->attempt_count = 0;
+			}
+			// Check it the attempts >= 3, if it is then add the threadid to the deadclients
+			// list to kill it.
+			if( temp->attempt_count > 3 )
+			{
+				dead_clients[dead_client_count++] = temp->tid;
+			}
+			temp = temp->next;
+		}
+		// Unlock the list
+		pthread_rwlock_unlock(&list->l_lock);
+		/*
+			Now start killing the dead clients ( remove nodes )
+		*/
+		int i;
+		for(i=0;i<dead_client_count;i++)
+		{
+			printf("Killing %d\n",dead_clients[i]);
+			// Remove the client node.
+			remove_client(dead_clients[i]);
+			printf("Removed node\n");
+			// Kill the client thread.
+			if(pthread_cancel(dead_clients[i]) == 0)
+			{
+				printf("THREAD CANCELLED PROPERLY\n");
+			}
+			else
+			{
+				printf("THREAD DIDNT CANCELLED PROPERLY\n");
+			}
+
+		}
+		// Now all the dead clients are killed.
+		// Sleep for 10 seconds and continue again.
+		sleep(10);
+		count++;
+	}
+}
 
 /*
 	Initalize the list
@@ -79,7 +168,8 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* us
 	temp->clientfd = s_id;
 	temp->client_addr = cliaddr;
 	temp->next = NULL;
-	temp->reachable = 1;
+	temp->attempt_count = 0;
+    time(&temp->last_contacted_time); // store the current time
 	return temp;
 }
 
@@ -89,6 +179,7 @@ client_node_t* create_new_client(int s_id, struct sockaddr_in* cliaddr, char* us
 	Type : 1 --- addition of client
 
 	This informs everyone in the system about the addition of new client or deletion of old client
+	DONT USE LOCK FOR THIS!!! LOCK IS BEING HANDLED BY THE CALLER OF THIS FUNCTION
 */
 int inform_everyone(char* client_id,int type)
 {
@@ -111,12 +202,12 @@ int inform_everyone(char* client_id,int type)
 	json_object_set_new(root,type_str,json_string(client_id));
 	char* str_JSON = json_dumps(root, JSON_DECODE_ANY);
 
-	// Send all the clients in the list
-	client_node_t* temp = list->head;
-
 	// Calculate the length and get the string, this will be sent to the client.
 	char* len_str = JSON_make_length_str(str_JSON);
 	//printf("Length is %d and length string made is %s\n\n\n",strlen(str_JSON),len_str);
+
+	// Send all the clients in the list
+	client_node_t* temp = list->head;
 
 	while( temp!= NULL )
 	{
@@ -131,7 +222,6 @@ int inform_everyone(char* client_id,int type)
 		temp = temp->next;
 	}
 	printf("----------SENT EVERYONE ABOUT THE UPDATE-------------\n");
-
 }
 
 /* 
@@ -140,7 +230,9 @@ int inform_everyone(char* client_id,int type)
 void add_client(client_node_t* client, int* is_client_added)
 {
 	// Lock the list
+	printf("before write lock in add_client\n");
 	pthread_rwlock_wrlock(&list->l_lock);
+	printf("after write lock in add_client\n");
 
 	// Inform all other clients about this new client
 	inform_everyone(client->client_id,1);
@@ -159,6 +251,7 @@ void add_client(client_node_t* client, int* is_client_added)
 	}
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
+	printf("Unlocked the lock\n");
 	// Client is added now!. Make it 1
 	*is_client_added = 1;
 }
@@ -169,8 +262,9 @@ void remove_client(pthread_t tid)
 {
 
 	// Lock the list
+	printf("before write lock in rem_client\n");
 	pthread_rwlock_wrlock(&list->l_lock);
-
+	printf("after write lock in rem_client\n");
 	// Client name holder
 	char client_name[USERNAME_LENGTH];
 
@@ -262,6 +356,7 @@ char* build_JSON_string_from_list(client_node_t* client)
 
 	// Unlock the list
 	pthread_rwlock_unlock(&list->l_lock);
+	printf("Unlocked the lock");
 
 	// Create a JSON object and add the client list to it
 	root = json_object();

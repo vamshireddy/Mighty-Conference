@@ -11,6 +11,7 @@
 #define LOGIN_STATUS_LENGTH 5
 #define MAX_LENGTH 1024
 #define LEN_STR_LENGTH 6 // It has 5 characters for length , 1 for \0
+#define MAX_DEAD_CLIENTS 50
 
 // Protocol lengths (JSON STRINGS)
 #define JSON_LEN_SIZE 25

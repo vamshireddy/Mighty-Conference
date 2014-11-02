@@ -7,6 +7,10 @@
 #define COMMON_HEADERS_H
 #include "common_headers.h"
 #endif
+#ifndef json_header
+#define json_header
+#include "json_utilities.h"
+#endif
 
 void parse_value(char* value,char* uname,char* pass)
 {
@@ -57,7 +61,7 @@ int handle_authentication(char* username,char* password)
 /*
 This function will reply the heartbeat message to the client
 */
-void handle_heartbeat(char* value)
+char* handle_heartbeat(char* value)
 {
-
+	return JSON_make_str("HEARBEAT","BEEPBEEP");
 }

@@ -81,7 +81,7 @@ int Read(int clientfd, char* buffer, int size, int is_client_added_to_list)
 	else if( chars_read == 0 )
 	{
 		printf("Client's connection is terminated\n");
-		delete_client_thread(is_client_added_to_list);
+		self_delete_client_thread(is_client_added_to_list);
 		return 0;
 	}
 }
@@ -115,8 +115,8 @@ int Write(int clientfd, char* buff, int len, client_node_t* client)
 				// Client not reachable
 				if( client!=NULL )
 				{
-					// Mark it unreachable so that, this node will be removed by the monitoring thread in the next minute
-					client->reachable = 0;
+					// Mark it unreachable so that, this node will be removed by the monitoring thread
+					client->attempt_count = 4;
 				}
 				return -1;
 			}

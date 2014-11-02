@@ -8,6 +8,11 @@
 #include "command_functions.h"
 #endif
 
+#ifndef client_list_h
+#define client_list_h
+#include "client_list.h"
+#endif
+
 
 #ifndef json_header
 #define json_header
@@ -29,7 +34,7 @@ typedef struct argument_list
 	This thread will self destroy by calling this function.
 	This is triggered because the client's connection is terminated.
 */
-int delete_client_thread(int is_client_added_to_list)
+int self_delete_client_thread(int is_client_added_to_list)
 {
 	/* Now deletion of the client has two parts.
 		 1) If the client has not yet logged in but terminated while reading username
@@ -111,9 +116,19 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		// Send the auth string
 		Write(clientfd, auth_str, strlen(auth_str), *client);
 
+		// Now update the client Node
+		// Update the last contacted time in the client node
+		time_t cur_time;
+		time(&cur_time);
+		(*client)->last_contacted_time = cur_time;
+
 		// Now send online clients list to the current client
 		send_clients_list(*client);
+
 		// Done!!
+		// Freeup the strings
+		free(len_str);
+		free(auth_str);
 	}
 	else
 	{
@@ -122,7 +137,23 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		{
 			printf("%s\n", "Its a Heartbeat message");
 			//Invoke Heartbeat message handling function with the value
-			handle_heartbeat(*client, value);
+			char* heart_beat_reply = handle_heartbeat(value);
+			
+			// Now update the client Node
+			// Update the last contacted time in the client node
+			time_t cur_time;
+			time(&cur_time);
+			(*client)->last_contacted_time = cur_time;
+
+			// Construct a reply and send it back
+			char* len_str = JSON_make_length_str(heart_beat_reply);
+			Write(clientfd, len_str, JSON_LEN_SIZE ,*client);
+			// Send the hearbeat reply string
+			Write(clientfd, heart_beat_reply, strlen(heart_beat_reply), *client);
+			// Free up the strings
+			free(len_str);
+			free(heart_beat_reply);
+			printf("HEARTBEAT BEEP BEEP\n");
 		}
 		else
 		{
@@ -135,6 +166,12 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 	// 2. Implement response message from the stream acceptor.
 }
 
+void thread_cleanup(void* arg)
+{
+	int sockfd = (int)arg;
+	/* Close the socket descriptor */
+	close(sockfd);
+}
 
 void* client_function(void* a)
 {
@@ -147,6 +184,12 @@ void* client_function(void* a)
 	int is_client_added_to_list = 0;  // Authenticated status
 	// if the client is authenticated, then it will be added to the list, then this flag will be set
 	// --------------------------//
+
+	// -----------------------------------------------------------------------------------------
+	//----------------------------Assign cleanup handlers---------------------------------------
+	//------------------------------------------------------------------------------------------
+	pthread_cleanup_push(thread_cleanup,(void*)clientfd);
+	//------------------------------------------------------------------------------------------
 
 	printf("New thread (%u) created for the client (%d)\n", (unsigned int)pthread_self(), clientfd);
 
@@ -174,6 +217,12 @@ void* client_function(void* a)
 
 		printf("Client AUTH STATUS : %d\n",is_client_added_to_list);
 	}
+
+	// -----------------------------------------------------------------------------------------
+	//----------------------------Assign cleanup handlers---------------------------------------
+	//------------------------------------------------------------------------------------------
+	pthread_cleanup_pop(0);
+	//------------------------------------------------------------------------------------------
 }
 
 

@@ -88,19 +88,20 @@ int main(int argc,char* argv[])
 
 	Listen(listenfd,LISTENQ);
 
-	// Before accespting clients, create a thread for handling user commands to query clients,etc 
+	// Before accepting clients, create a thread for handling user commands to query clients,etc 
 
 	if( pthread_create(&tid, NULL, input_commands_function, (void*)list) != 0)
 	{
-		printf("Failed to spawn a thread for the client");
+		printf("Failed to spawn a thread for the input commands");
 		return -1;
 	}
 
-	/*if( pthread_create(&tid, NULL, monitor_list_for_stale_clients, NULL) != 0)
+	// Monitor thread
+	if( pthread_create(&tid, NULL, monitor_list, NULL) != 0)
 	{
-		printf("Failed to spawn a thread for the client");
+		printf("Failed to spawn a thread for the list monitor");
 		return -1;
-	}*/
+	}
 
 	for(;;)
 	{
