@@ -121,8 +121,8 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		if( value!= NULL )
 		{
 			printf("%s\n", "Its a Heartbeat message");
-			//  Invoke Heartbeat message handling function with the value
-			handle_heartbeat(value);
+			//Invoke Heartbeat message handling function with the value
+			handle_heartbeat(*client, value);
 		}
 		else
 		{
@@ -130,6 +130,9 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			// Error
 		}
 	}
+	// TODO :
+	// 1. Implement request message which comes from the stream initiator
+	// 2. Implement response message from the stream acceptor.
 }
 
 

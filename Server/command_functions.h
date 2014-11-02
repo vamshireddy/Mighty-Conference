@@ -1,12 +1,14 @@
+/*
+	This header file defines all the functions which are perfomed by the server when a 
+	command is received in JSON message from the clients
+*/
+
 #ifndef COMMON_HEADERS_H
 #define COMMON_HEADERS_H
 #include "common_headers.h"
 #endif
 
-/*
-
-*/
-parse_value(char* value,char* uname,char* pass)
+void parse_value(char* value,char* uname,char* pass)
 {
 	char username[USERNAME_LENGTH];
 	char password[PASSWORD_LENGTH];

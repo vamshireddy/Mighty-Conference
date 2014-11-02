@@ -23,6 +23,8 @@ char* JSON_make_length_str(char* str)
 
 /*
 	This function will extract the value from the JSON {"key":"value"} pair
+	If this function is used for extracting length from the length string, then atoi is necessary to the returned value of this
+	function.
 */
 char* JSON_get_value_from_pair(char* cli_strlen_JSON, char* key)
 {
