@@ -4,8 +4,6 @@ Mighty-Conference
 Mighty Conferencing Application is aimed to provide a way for professors to connect seamlessly and exchange their ideas in Computer Science Building at Manipal Institute Of Technology
 
 #### Interaction between client and server ####
-
-
 * Client and Server Agree on the format for the length string. It is defined in the json_utilities in the authentication_feature branch of the project. Its usually 16 bytes.
 
 * Client can use this function and supply the string to be sent, it will calculate the length and make a json string and gives it to you, now the given json string is sent first( as it contains length ) and then your string
