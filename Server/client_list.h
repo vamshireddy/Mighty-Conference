@@ -203,7 +203,9 @@ int inform_everyone(char* client_id,int type)
 	char* str_JSON = json_dumps(root, JSON_DECODE_ANY);
 
 	// Calculate the length and get the string, this will be sent to the client.
-	char* len_str = JSON_make_length_str(str_JSON);
+	json_t* json_obj = JSON_make_length_str(str_JSON);
+	// Extract the string from the JSON object
+	char* len_str = json_dumps(json_obj, JSON_DECODE_ANY);
 	//printf("Length is %d and length string made is %s\n\n\n",strlen(str_JSON),len_str);
 
 	// Send all the clients in the list
@@ -222,6 +224,10 @@ int inform_everyone(char* client_id,int type)
 		temp = temp->next;
 	}
 	printf("----------SENT EVERYONE ABOUT THE UPDATE-------------\n");
+	// Free up the JSON objects
+	json_decref(json_obj);
+	json_decref(root);
+
 }
 
 /* 
@@ -361,12 +367,6 @@ char* build_JSON_string_from_list(client_node_t* client)
 	// Create a JSON object and add the client list to it
 	root = json_object();
 	json_object_set_new(root,"CLIENTS_LIST",cli_array);
-
-	// Make a JSON string from the above object
-	char* s = json_dumps(root, JSON_DECODE_ANY);
-
-	//printf("Built %s \n",s);
-
-	return s;
+	return root;
 }
 

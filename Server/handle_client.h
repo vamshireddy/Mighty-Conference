@@ -67,13 +67,19 @@ int self_delete_client_thread(int is_client_added_to_list)
 int send_clients_list(client_node_t* client)
 {
 	// Get the online clients and build the string from it
-	char* string = build_JSON_string_from_list(client);
-	// Get the length first of the returned string
-	char* len_str = JSON_make_length_str(string);
+	json_t* json_list_object = build_JSON_string_from_list(client);
+	char* string = json_dumps(json_list_object, JSON_DECODE_ANY);
+	// Get the length json object first
+	json_t* json_object = JSON_make_length_str(string);
+	// Make the length string
+	char* len_str = json_dumps(json_object, JSON_DECODE_ANY);
 	// Now send the length string to client
 	Write(client->clientfd,len_str,JSON_LEN_SIZE,client);
 	// Now send the online clients string to the client
 	Write(client->clientfd,string,strlen(string),client);
+	// Free up json object
+	json_decref(json_object);
+	json_decref(json_list_object);
 }
 
 
@@ -81,11 +87,18 @@ int send_clients_list(client_node_t* client)
 int serve_command(int clientfd, char* command, client_node_t** client, int* is_client_added_to_list, struct sockaddr_in* sockaddr)
 {
 	// {"COMMAND_NAME":"value"}
-	char* value = JSON_get_value_from_pair(command,"AUTH");
-	if( value!= NULL )
+	char* value;
+	json_t* json_value_obj;
+
+	// Extract the AUTH value and make a string out of it
+	json_value_obj = JSON_get_value_from_pair(command,"AUTH");
+	value = json_string_value(json_value_obj);
+
+	if( value != NULL )
 	{
 		// AUTHENTICATION PART
 		char* auth_str;
+		json_t* auth_str_reply_o;
 		char username[USERNAME_LENGTH];
 		char password[PASSWORD_LENGTH];
 		parse_value(value,username,password);
@@ -103,14 +116,22 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			printf("Client node created succesfully\n");
 
 			// Now send back reply to the client
-			auth_str = JSON_make_str("AUTH","GRANTED");		
+			auth_str_reply_o = JSON_make_str("AUTH","GRANTED");	
 		}
 		else
 		{
-			auth_str = JSON_make_str("AUTH","DENY");
+			auth_str_reply_o = JSON_make_str("AUTH","DENY");		
 		}
+		// Dump the auth string from json object
+		auth_str = json_dumps(auth_str_reply_o, JSON_DECODE_ANY);	
 		// Send auth string len
-		char* len_str = JSON_make_length_str(auth_str);
+		// Fetch the JSON string length object
+		json_t* json_obj = JSON_make_length_str(auth_str);
+
+		// Extract the string from the JSON object
+		char* len_str = json_dumps(json_obj, JSON_DECODE_ANY);
+
+
 		Write(clientfd, len_str, JSON_LEN_SIZE , *client);
 		// Send the auth string
 		Write(clientfd, auth_str, strlen(auth_str), *client);
@@ -124,15 +145,26 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		// Now send online clients list to the current client
 		send_clients_list(*client);
 		// Done!!
+		// Free up the JSON objects
+		json_decref(json_obj);
+		json_decref(auth_str_reply_o);
 	}
 	else
 	{
-		value = JSON_get_value_from_pair(command,"HEARTBEAT");
-		if( value!= NULL )
+		// Extract the HEARTBEAT From the JSON object and make string out of it!
+		json_value_obj = JSON_get_value_from_pair(command,"HEARTBEAT");
+		if( json_value_obj == NULL )
+		{
+			exit(0);
+		}
+		value = json_string_value(json_value_obj); 
+	
+		if( value != NULL )
 		{
 			printf("%s\n", "Its a Heartbeat message");
 			//Invoke Heartbeat message handling function with the value
-			char* heart_beat_reply = handle_heartbeat(value);
+			json_t* heart_beat_reply_o = JSON_make_str("HEARBEAT","BEEPBEEP");
+			char* heart_beat_reply = json_dumps(heart_beat_reply_o, JSON_DECODE_ANY);
 			// Now update the client Node
 			// Update the last contacted time in the client node
 			time_t cur_time;
@@ -140,18 +172,41 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			(*client)->last_contacted_time = cur_time;
 
 			// Construct a reply and send it back
-			char* len_str = JSON_make_length_str(heart_beat_reply);
+			// Make length string
+			json_t* json_obj = JSON_make_length_str(heart_beat_reply);
+			if( json_obj == NULL )
+			{
+				printf("ERROR");
+				exit(0);
+			}
+			// Extract the string from the JSON object
+			char* len_str = json_dumps(json_obj, JSON_DECODE_ANY);
+			if( len_str == NULL )
+			{
+				printf("ERROR");
+				exit(0);
+			}
+
 			Write(clientfd, len_str, JSON_LEN_SIZE ,*client);
 			// Send the hearbeat reply string
 			Write(clientfd, heart_beat_reply, strlen(heart_beat_reply), *client);
 			// Free up the strings
 			printf("HEARTBEAT BEEP BEEP\n");
+			json_decref(json_obj);
+			json_decref(heart_beat_reply_o);
 		}
 		else
 		{
 			printf("Error in the JSON string from client\n");
 			// Error
 		}
+		
+	}
+
+	// Now free the json objects.
+	if( json_value_obj != NULL )
+	{
+		json_decref(json_value_obj);
 	}
 	// TODO :
 	// 1. Implement request message which comes from the stream initiator
@@ -196,8 +251,11 @@ void* client_function(void* a)
 		
 
 		// Get the length of the string that the client is about to send
-		int len = atoi(JSON_get_value_from_pair(length_recv_buffer,"LENGTH"));
-		
+		json_t* json_object = JSON_get_value_from_pair(length_recv_buffer,"LENGTH");
+		int len = atoi(json_string_value(json_object));
+		// Free up JSON object
+		json_decref(json_object);
+
 		// Allocate a buffer for the command
 		char* command_buffer = (char*)malloc(sizeof(len+1)); // +1 for the null char
 		
