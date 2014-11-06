@@ -94,6 +94,8 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 	json_value_obj = JSON_get_value_from_pair(command,"AUTH");
 	value = json_string_value(json_value_obj);
 
+	printf("\n\n\nCLIENT VALUE IS %d\n\n",*is_client_added_to_list);
+
 	if( value != NULL )
 	{
 		// AUTHENTICATION PART
@@ -107,16 +109,27 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		if( handle_authentication(username,password) == 1 )
 		{
 			// Access granted
-			// Create a new node
-			*client = create_new_client(clientfd, sockaddr, username);
-			printf("New client created\n");
+			// Before allocating a new client, check whether an entry is already present
+			if( check_client(username) == 1 )
+			{
+				// User already in the list
+				printf("Client node already present\nALREADY LOGGED IN\n");
+				auth_str_reply_o = JSON_make_str("AUTH","ALREADYLOGGED");
+			}
+			else
+			{	
+				// User not in the list
+				// Create a new node
+				*client = create_new_client(clientfd, sockaddr, username);
+				printf("New client created\n");
 
-			// Add the node to the list
-			add_client(*client, is_client_added_to_list);
-			printf("Client node created succesfully\n");
+				// Add the node to the list
+				add_client(*client, is_client_added_to_list);
+				printf("Client node created succesfully\n");
 
-			// Now send back reply to the client
-			auth_str_reply_o = JSON_make_str("AUTH","GRANTED");	
+				// Now send back reply to the client
+				auth_str_reply_o = JSON_make_str("AUTH","GRANTED");	
+			}
 		}
 		else
 		{
@@ -138,12 +151,17 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 
 		// Now update the client Node
 		// Update the last contacted time in the client node
-		time_t cur_time;
-		time(&cur_time);
-		(*client)->last_contacted_time = cur_time;
-
-		// Now send online clients list to the current client
-		send_clients_list(*client);
+		if( *client != NULL )
+		{
+			printf("I am here");
+			// Handling If the client is not created due to already logged in error
+			time_t cur_time;
+			time(&cur_time);
+			(*client)->last_contacted_time = cur_time;
+			
+			// Now send online clients list to the current client
+			send_clients_list(*client);
+		}
 		// Done!!
 		// Free up the JSON objects
 		json_decref(json_obj);
@@ -155,11 +173,12 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		json_value_obj = JSON_get_value_from_pair(command,"HEARTBEAT");
 		if( json_value_obj == NULL )
 		{
-			exit(0);
+			printf("Error in JSON\n");
+			pthread_exit((void*)0);
 		}
 		value = json_string_value(json_value_obj); 
 	
-		if( value != NULL )
+		if( value != NULL && (*client != NULL))
 		{
 			printf("%s\n", "Its a Heartbeat message");
 			//Invoke Heartbeat message handling function with the value
@@ -176,15 +195,15 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 			json_t* json_obj = JSON_make_length_str(heart_beat_reply);
 			if( json_obj == NULL )
 			{
-				printf("ERROR");
-				exit(0);
+				printf("Error in Making JSON string\n");
+				pthread_exit((void*)0);
 			}
 			// Extract the string from the JSON object
 			char* len_str = json_dumps(json_obj, JSON_DECODE_ANY);
 			if( len_str == NULL )
 			{
-				printf("ERROR");
-				exit(0);
+				printf("Error in Making JSON string\n");
+				pthread_exit((void*)0);
 			}
 
 			Write(clientfd, len_str, JSON_LEN_SIZE ,*client);
@@ -197,8 +216,23 @@ int serve_command(int clientfd, char* command, client_node_t** client, int* is_c
 		}
 		else
 		{
-			printf("Error in the JSON string from client\n");
-			// Error
+			// Extract the REQUEST from the JSON object and make string out of it!
+			/*json_value_obj = JSON_get_value_from_pair(command,"REQUEST");
+			if( json_value_obj == NULL )
+			{
+				printf("Error in JSON COMMAND\n");
+				pthread_exit((void*)0);
+			}
+			value = json_string_value(json_value_obj);
+			if( value!=NULL && (*client != NULL))
+			{
+				// Received REQUEST Message
+			}
+			else
+			{
+				// Error format
+				// Do something else
+			}*/
 		}
 		
 	}
@@ -248,7 +282,6 @@ void* client_function(void* a)
 		// Receive Length of the command from the client
 		// is_client_added_to_list indicates wheather the client is there in the linked list 
 		Read(clientfd, length_recv_buffer, JSON_LEN_SIZE, is_client_added_to_list);
-		
 
 		// Get the length of the string that the client is about to send
 		json_t* json_object = JSON_get_value_from_pair(length_recv_buffer,"LENGTH");

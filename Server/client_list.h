@@ -310,6 +310,40 @@ void remove_client(pthread_t tid)
 }
 
 /*
+	Check if the clientId is currentlt in the list or not
+	returns 1 --> if the clientID is present in the list
+	return 0 --> if not
+*/
+
+int check_client(char* clientID)
+{
+	// Lock this list in read mode
+	pthread_rwlock_rdlock(&list->l_lock);
+
+	client_node_t* temp = list->head;
+
+	int flag = 0;
+
+	while( temp!= NULL )
+	{
+		if( strcmp(temp->client_id,clientID) == 0 )
+		{
+			// Already present, return -1
+			// Unlock the list
+			flag = 1;
+			break;
+		}
+		temp = temp->next;
+	}
+
+	// Unlock the list
+	pthread_rwlock_unlock(&list->l_lock);
+
+	return flag;
+}
+
+
+/*
  	Displays the online clients in the system
  */
 void display_clients()
