@@ -33,16 +33,33 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 
 	{"NEW_CLIENT":"akshay"} 
 
-   If someone goes out of the system, server sends the following message to all of the clients
+   If someone goes out of the system, server sends the following message to all of the clients   
 
-    {"DEL_CLIENT":"vamshi"}
+        {"DEL_CLIENT":"vamshi"}
 
 7. Heartbeack acks are received from the clients on the respective server threads
 
     {"HEARTBEAT":"beep"}
 
     {"HEARTBEAT":"beepbeep"}
-
+    
+8. If someone wants to chat with anyone on the clients list, he requests the server to connect him to the other peer.   
+    {"REQUEST":"vamshi"} client --> server   
+9. Server on getting a request, will check whether the other peer is ready to receive the call. It will inturn send a message to the other peer and confirms the acceptance.    
+    {"AREYOUFREE?"}  server --> other peer   
+    
+10. Other peer will reply +vely if it is free else with some -ve reponse.    
+    {"AREYOUFREE?","YES"} other peer-> server   
+   
+11. Server will deliver the details to the initiator.    
+    {"RESPONSE":["192.168.56.101","8234"]}   
+    
+12. If the other peer is not free, then it will send    
+    {"AREYOUFREE?":"NO"}   
+    
+13. Server sends back a response to initiator    
+    {"RESPONSE":["BUSY","BUSY"]}
+     
 
 #### How to send messages ####
 
