@@ -369,7 +369,7 @@ void display_clients()
 	List is traversed and JSON string is built 
 */
 
-char* build_JSON_string_from_list(client_node_t* client)
+json_t* build_JSON_string_from_list(client_node_t* client)
 {
 
 	// Create JSON objects and populate them
