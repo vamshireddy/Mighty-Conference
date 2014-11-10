@@ -27,7 +27,6 @@ class webHandler(BaseHTTPRequestHandler):
 def main():
 	try:
     		server = HTTPServer(('localhost', 8080), webHandler)
-		print pyio.write()
     		print 'HTTPServer started'
 		os.chdir('./../Webserver/')
     		server.serve_forever()
