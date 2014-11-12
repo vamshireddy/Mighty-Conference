@@ -66,7 +66,6 @@ Mighty Conferencing Application is aimed to provide a way for professors to conn
 * install python development headers
 	Ubuntu users : 
 	sudo apt-get install python-dev
-	https://packages.debian.org/wheezy/python-dev
      
 
 #### How to send messages ####
