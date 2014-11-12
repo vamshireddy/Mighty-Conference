@@ -4,11 +4,11 @@
 #define WS_STOP 0
 #include <Python.h>
 #include<unistd.h>
-#include<stdio.h>
-
 
 int ws_state;
 extern int sock_fd;
+PyObject * pModule; //object to hold module
+
 
 /* Function to send data */
 
@@ -91,7 +91,6 @@ void* ws_start(void * args){
 	//args is null 
       PyObject 
    *pName, //object to hold script name string
-   *pModule, //0object to hold module
    *pFunc; //object to hold function
 
 

@@ -28,7 +28,7 @@ const char* JSON_get_value_from_pair(char* cli_strlen_JSON, char* key)
 
 	if( root == NULL )
 	{
-		printf("Error is decoding JSON\n");
+		printf("Error in decoding JSON\n");
 		exit(0);
 	}
 
@@ -40,9 +40,7 @@ const char* JSON_get_value_from_pair(char* cli_strlen_JSON, char* key)
 	{
 		return NULL;
 	}
-
-	char* len_text = json_string_value(len_value_JSON); // Convert the value JSON object to string to get the length in string format
-
+	const char* len_text = json_string_value(len_value_JSON); // Convert the value JSON object to string to get the length in string format
 	return len_text;
 }
 

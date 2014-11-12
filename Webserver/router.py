@@ -39,9 +39,15 @@ def getFile(name):
 
 def post(path,args):
 	#request for login
-	if path is '/login':
+	if path=='/login':
 		#send auth data using c sockets
-		pass
+		user = args['username']
+		passwd = args['password']
+		auth_str = '{"AUTH":"'+user+'$'+passwd+'"}'
+		leng = len(auth_str)
+		len_str = '{"LENGTH":'+leng.zfill(5)+'}'
+		pyio.write(len_str)
+		pyio.write(auth_str)
 	return
 
 def init(s):	

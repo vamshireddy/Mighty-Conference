@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-import urlparse,cgi,os
+import urlparse,cgi,os,Queue
 import pyio		#module for talking to the C server socket
 #custom user made module
-import router
+import router,session,messagequeue
 
 class webHandler(BaseHTTPRequestHandler):
 	
@@ -34,3 +34,13 @@ def main():
 	except KeyboardInterrupt:
     		print 'server.socket.close()'
     		server.socket.close()
+
+def auth_state(status):
+	if status=='access':
+		#need to start session
+		session.start()
+		session.session['logged']
+		#need to queue this for the webclient to get updated
+		Queue.
+	elif status=='deny':
+		#need to display message	
