@@ -72,7 +72,6 @@ void client_parse(char * message_json){
             	PyObject_CallObject(pFunc, Py_BuildValue("s", tmp));
        		}
 	return;	//auth related
-	}
-		
+	}	
 }
 #endif

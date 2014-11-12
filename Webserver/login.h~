@@ -1,0 +1,11 @@
+
+#include<Python.h>
+//sharing a copy of the client file descriptor 
+extern int sock_fd;
+
+static PyObject * login(PyObject *self,PyObject *args){
+	//need to send the auth label
+	
+}
+
+
