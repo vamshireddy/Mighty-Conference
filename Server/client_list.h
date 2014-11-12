@@ -357,7 +357,8 @@ void display_clients()
 
 	while( temp!= NULL )
 	{
-		printf("Client id : %s , Client thread id : %u \n",temp->client_id, (unsigned int)temp->tid);
+		printf("Client id : %s , Client thread id : %u "
+			", last_contacted_time = %s, attempt_count = %d\n",temp->client_id, (unsigned int)temp->tid, ctime(&temp->last_contacted_time), temp->attempt_count);
 		temp = temp->next;
 	}
 
