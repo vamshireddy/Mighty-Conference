@@ -1,4 +1,4 @@
-##### Architecture 
+## Architecture 
 ### Connection Persistence
 * Each client will be spawned a thread at the server for which a node is created, and also TCP socket.
 * All the conenctions are persistent. Clients give Heartbeat messages to make the connection persistent.
